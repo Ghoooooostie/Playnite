@@ -1251,4 +1251,6 @@ Abra um novo problema na página do GitHub do Playnite com um pedido para corrig
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Deseja guardar as alterações efetuadas?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Instalação portátil</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Nenhum comando detetado</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

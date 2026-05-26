@@ -1261,4 +1261,6 @@ SHIFT-ENTER: άνοιγμα μενού στοιχείων</sys:String>
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Θέλετε να αποθηκεύσετε τις αλλαγές που κάνατε?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Φορητή εγκατάσταση</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Δεν εντοπίστηκαν χειριστήρια</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

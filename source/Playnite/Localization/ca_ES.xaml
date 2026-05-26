@@ -944,7 +944,7 @@ Si vols instal·lar o desinstal·lar integracions addicionals, pots utilitzar l'
     <sys:String x:Key="LOCAddonChangesRestart">És necessari reiniciar l'aplicació per poder aplicar els canvis pendents.</sys:String>
     <sys:String x:Key="LOCAddonQueuedForInstall">Aquest complement té programada la seva instal·lació.</sys:String>
     <sys:String x:Key="LOCAddonInstall">Instal·lar</sys:String>
-    <sys:String x:Key="LOCAddonReinstall"></sys:String>
+    <sys:String x:Key="LOCAddonReinstall">Reinstal·lar</sys:String>
     <sys:String x:Key="LOCAddonUninstall">Desinstal·lar</sys:String>
     <sys:String x:Key="LOCAddonAlreadyInstalled">Ja instal·lat</sys:String>
     <sys:String x:Key="LOCAddonNoAddonsAvailable">No s'han trobat noves actualitzacions de complements.</sys:String>
@@ -955,7 +955,7 @@ Si vols instal·lar o desinstal·lar integracions addicionals, pots utilitzar l'
     <sys:String x:Key="LOCAddonUpdateStatusLicenseRejected">S'ha rebutjat la llicència</sys:String>
     <sys:String x:Key="LOCAddonDownloadingAddon">Descarregant {0}...</sys:String>
     <sys:String x:Key="LOCAddonLookingForUpdates">Cercant actualitzacions de complements...</sys:String>
-    <sys:String x:Key="LOCAppLookingForUpdates"></sys:String>
+    <sys:String x:Key="LOCAppLookingForUpdates">Cercant actualitzacions del programa...</sys:String>
     <sys:String x:Key="LOCAddonUpdatesAvailable">Hi ha disponibles una o més actualitzacions de complements.</sys:String>
     <sys:String x:Key="LOCAddonSelectToUpdate">Selecciona els elements que vols actualitzar</sys:String>
     <sys:String x:Key="LOCAddonDevReferenceLoaded">Instància de desenvolupament d'extensió</sys:String>
@@ -976,7 +976,7 @@ Si vols instal·lar o desinstal·lar integracions addicionals, pots utilitzar l'
     <sys:String x:Key="LOCActionTrackingModeProcess">Procés</sys:String>
     <sys:String x:Key="LOCActionTrackingModeDirectory">Carpeta</sys:String>
     <sys:String x:Key="LOCActionTrackingOriginalProcess">Procés original</sys:String>
-    <sys:String x:Key="LOCActionTrackingProcessName"></sys:String>
+    <sys:String x:Key="LOCActionTrackingProcessName">Nom del procés</sys:String>
     <sys:String x:Key="LOCDevelTraceLogEnable">Registrar missatges de seguiment</sys:String>
     <sys:String x:Key="LOCMultiEditOverwriteWarning">Els següents canvis sobreescriuen les dades per tots els jocs actualment seleccionats!</sys:String>    
     <sys:String x:Key="LOCGridViewSpacingModeNone">Cap</sys:String>
@@ -1014,7 +1014,7 @@ Si vols instal·lar o desinstal·lar integracions addicionals, pots utilitzar l'
 Desactivar això pot portar problemes amb jocs que no rebin informació d'entrada a l'inici!</sys:String>
     <sys:String x:Key="LOCSettingsFontSize">Mida de la font</sys:String>
     <sys:String x:Key="LOCSettingsFontSizeSmall">Mida de la font petita</sys:String>
-    <sys:String x:Key="LOCSettingsControllerApi"></sys:String>
+    <sys:String x:Key="LOCSettingsControllerApi">Activar el suport API per joc amb comandament</sys:String>
     <sys:String x:Key="LOCSettingsXInputProcessing">Compatibilitat amb comandament de jocs</sys:String>
     <sys:String x:Key="LOCSettingsXInputProcessingDescription" xml:space="preserve">Si es desactiva, Playnite no acceptarà cap entrada de comandament de joc.
 
@@ -1112,8 +1112,8 @@ Si comences a experimentar alguns problemes després d'instal·lar un tema o una
     <sys:String x:Key="LOCCompletionStatusPlayedStatusDesc">Estat assignat a jocs jugats per primer cop</sys:String>
     <sys:String x:Key="LOCPowerShellCreationError">No s'ha pogut iniciar el temps d'execució del script de PowerShell. Si ets usuari de Windows 7, prova de (re)instal·lar PowerShell 5.1 per resoldre el problema.</sys:String>
     <sys:String x:Key="LOCFilterPresetNameConflict">El predefinit de filtratge amb el nom especificat ja existeix. Vols actualitzar el predefinit amb la nova configuració?</sys:String>
-    <sys:String x:Key="LOCSortingNameAutofill"></sys:String>
-    <sys:String x:Key="LOCSortingNameAutofillTooltip"></sys:String>
+    <sys:String x:Key="LOCSortingNameAutofill">Omplir automàticament els noms d'ordenació restants pels jocs afegits o editats per lots</sys:String>
+    <sys:String x:Key="LOCSortingNameAutofillTooltip">Quan edites un joc, l'afegeixes actualitzant la llibreria, escaneges la carpeta d'un emulador, o escaneges una carpeta normal, omple automàticament el &quot;Nom d'Ordenació&quot; amb la representació millor ordenable del nom del joc. Per exemple, &quot;The Witcher 3&quot; s'ordenarà com a &quot;Witcher 03&quot;. No utilitzarà un nom d'ordenació que no sigui diferent del nom del joc, i només actualitzarà els noms d'ordenació que estiguin buits.</sys:String>
     <sys:String x:Key="LOCSortingNameRemovedArticles">Aquestes paraules s'eliminaran del principi del valor de nom d'ordenació omplert automàticament:</sys:String>
     <sys:String x:Key="LOCSortingNameRemovedArticlesTooltip">Utilitza això per ignorar paraules al principi d'una cadena per propòsits d'ordenació. El valor per defecte és &quot;The&quot;, &quot;An&quot; i &quot;A&quot;.</sys:String>
     <sys:String x:Key="LOCSortingNameAutofillButton">Omplir el nom d'ordenació de jocs sense un</sys:String>
@@ -1264,4 +1264,6 @@ Obre una nova incidència a la pàgina de GitHub de Playnite amb una sol·licitu
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Vols desar els canvis que has fet?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Instal·lació portàtil</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">No s'han detectat comandaments</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

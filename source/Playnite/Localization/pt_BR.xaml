@@ -1262,4 +1262,6 @@ Avise do problema na página do Playnite no GitHub com um pedido de correção.<
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Você quer salvar as alterações feitas?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Instalação portátil</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Nenhum controle detectado</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

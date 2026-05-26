@@ -1169,4 +1169,6 @@
     <sys:String x:Key="LOCUnsavedChangesAskMessage">तुम्ही केलेले बदल तुम्हाला सेव्ह करायचे आहेत का?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">सुवाह्य स्थापना</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">कोणतेही कंट्रोलर सापडले नाहीत</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

@@ -1266,4 +1266,6 @@ Playnite將會重新啟動並開始備份資料</sys:String>
     <sys:String x:Key="LOCUnsavedChangesAskMessage">是否要儲存所做的更改？</sys:String>
     <sys:String x:Key="LOCPortableInstallation">可攜式安裝</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">未偵測到搖桿</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource">預設來源</sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError">網頁圖片搜尋失敗。失敗原因可能有多種。請點選以下連結查看詳細說明和解決方法。</sys:String>
 </ResourceDictionary>

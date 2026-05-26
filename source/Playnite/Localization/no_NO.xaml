@@ -1263,4 +1263,6 @@ Det angitte datoformatet vil bli brukt til alle andre datoer.</sys:String>
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Vil du lagre endringene du har gjort?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Flyttbar installasjon</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Ingen kontrollere funnet</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

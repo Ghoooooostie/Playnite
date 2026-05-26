@@ -1274,4 +1274,6 @@ Apri un nuovo problema sulla pagina GitHub di Playnite con una richiesta di corr
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Vuoi salvare le modifiche?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Installazione portatile</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Nessun controllore rilevato</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource">Fonte predefinita</sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError">Ricerca immagini web non riuscita. Questo può accadere per vari motivi. Vedere il seguente collegamento per maggiori dettagli e suggerimenti alla risoluzione dei problemi.</sys:String>
 </ResourceDictionary>

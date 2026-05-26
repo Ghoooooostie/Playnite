@@ -1262,4 +1262,6 @@ Playnite 将自动重启以开始备份过程。</sys:String>
     <sys:String x:Key="LOCUnsavedChangesAskMessage">您想要保存您所作的更改吗？</sys:String>
     <sys:String x:Key="LOCPortableInstallation">便携式安装</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">未检测到控制器</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

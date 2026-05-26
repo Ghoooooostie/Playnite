@@ -1260,4 +1260,6 @@ Buka masalah baru di halaman GitHub Playnite dengan permintaan untuk memperbaiki
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Apakah Anda ingin menyimpan perubahan yang Anda buat?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Pemasangan portabel</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Tidak ada kontroler yang terdeteksi</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

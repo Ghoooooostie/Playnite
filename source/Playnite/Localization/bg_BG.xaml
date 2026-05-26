@@ -1264,4 +1264,6 @@ Playnite автоматично ще се рестартира, за да ста
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Искате ли да запазите направените промени?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Портативна инсталация</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Няма открити контролери</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

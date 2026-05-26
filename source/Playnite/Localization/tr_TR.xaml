@@ -1262,4 +1262,6 @@ Playnite GitHub sayfasında yeni bir hata kaydı oluşturarak arızalı dosyalar
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Yaptığınız değişiklikleri kaydetmek istiyor musunuz?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Taşınabilir kurulum</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Hiçbir oyun kolu algılanmadı</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource">Varsayılan kaynak</sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError">Web görüntüsü araması başarısız oldu. Bu çeşitli nedenlerden dolayı gerçekleşebilir. Daha fazla ayrıntı ve sorun giderme ipuçları için aşağıdaki bağlantıya bakın.</sys:String>
 </ResourceDictionary>

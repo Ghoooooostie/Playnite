@@ -1265,4 +1265,6 @@ Mở issue mới trên trang GitHub của Playnite để đề xuất sửa file
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Bạn có muốn lưu các thay đổi không?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Trình cài đặt di động</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Không phát hiện được thiết bị điều khiển nào</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource">Nguồn mặc định</sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError">Tìm hình trên mạng lỗi. Có thể do một vài lý do. Xem đường liên kết sau để có chi tiết và gợi ý xử lý.</sys:String>
 </ResourceDictionary>

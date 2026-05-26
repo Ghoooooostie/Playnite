@@ -1250,4 +1250,6 @@ Kérlek nyiss egy új jegyet a Playnite GitHub oldalán angolul, kérve, hogy ja
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Szeretnéd menteni változtatásaidat?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Hordozható (portable) telepítés</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Nem található játékvezérlő</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

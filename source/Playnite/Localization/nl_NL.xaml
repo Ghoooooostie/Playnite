@@ -1281,4 +1281,6 @@ Open het nieuwe probleem op Playnite's GitHub-pagina met een verzoek om corrupti
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Wil je de wijzigingen opslaan?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Draagbare installatie</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Geen controllers gedetecteerd</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

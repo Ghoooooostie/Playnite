@@ -1219,4 +1219,6 @@ Jos ongelmia ilmenee teeman tai laajennuksen asentamisen jälkeen, kokeile poist
     <sys:String x:Key="LOCUnsavedChangesAskMessage"></sys:String>
     <sys:String x:Key="LOCPortableInstallation"></sys:String>
     <sys:String x:Key="LOCNoControllersDetected"></sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

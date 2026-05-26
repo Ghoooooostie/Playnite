@@ -1266,4 +1266,6 @@ SHIFT-ENTER: פתיחת תפריט</sys:String>
     <sys:String x:Key="LOCUnsavedChangesAskMessage">האם לשמור את השינויים שביצעת?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">התקנה ניידת</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">לא נמצאו בקרים</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

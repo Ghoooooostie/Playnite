@@ -1262,4 +1262,6 @@ Ava Playnite'i GitHubi lehel uus vearaport taotlusega parandada oma rikutud fail
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Kas tahad tehtud muudatused salvestada?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Portatiivne paigaldus</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Juhtpulte ei tuvastatud</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

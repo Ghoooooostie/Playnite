@@ -1268,4 +1268,6 @@ Otwórz nowy problem na stronie GitHub Playnite z prośbą o naprawienie uszkodz
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Czy chcesz zapisać zmiany?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Instalacja przenośna</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Nie wykryto kontrolerów</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource">Źródło domyślne</sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError">Wyszukiwanie obrazów w Internecie nieudane. Może to wynikać z różnych przyczyn. Więcej informacji oraz wskazówki dotyczące rozwiązywania problemów znajdziesz pod poniższym linkiem.</sys:String>
 </ResourceDictionary>

@@ -1264,4 +1264,6 @@ Abre un nuevo problema en la página de GitHub de Playnite con una solicitud par
     <sys:String x:Key="LOCUnsavedChangesAskMessage">¿Quieres guardar los cambios que realizados?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Instalación portátil</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">No se han detectado mandos de juego</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource">Fuente por defecto </sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError">La búsqueda de la imagen en la web ha fallado. Esto puede pasar por varias razones. Pincha en el link para ver más detalles y consejos para la resolución del problema</sys:String>
 </ResourceDictionary>

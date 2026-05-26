@@ -1261,4 +1261,6 @@ Si vous voyez ce message, veuillez ouvrir un ticket sur la page Github de Playni
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Voulez-vous enregistrer les modifications que vous avez apportées ?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Installation portable</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Aucune manette détectée</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

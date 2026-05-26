@@ -1259,4 +1259,6 @@ Abre un problema na páxina de GitHub de Playnite e solicita que se arranxe o pr
     <sys:String x:Key="LOCUnsavedChangesAskMessage">Queres gardar os cambios realizados?</sys:String>
     <sys:String x:Key="LOCPortableInstallation">Instalación portátil</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">Non se detectaron controladores</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>

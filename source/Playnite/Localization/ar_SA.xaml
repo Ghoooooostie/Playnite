@@ -1319,4 +1319,6 @@ SHIFT-ENTER: فتح قائمة العناصر</sys:String>
     <sys:String x:Key="LOCUnsavedChangesAskMessage">هل تريد حفظ التغييرات التي أجريتها؟</sys:String>
     <sys:String x:Key="LOCPortableInstallation">التثبيت المحمول</sys:String>
     <sys:String x:Key="LOCNoControllersDetected">لم يتم العثور على أي وحدة تحكم</sys:String>
+    <sys:String x:Key="LOCDefaultWebImageSource"></sys:String>
+    <sys:String x:Key="LOCWebImageDownloadError"></sys:String>
 </ResourceDictionary>
