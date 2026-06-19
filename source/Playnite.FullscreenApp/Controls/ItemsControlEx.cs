@@ -35,6 +35,49 @@ namespace Playnite.FullscreenApp.Controls
             PreviewKeyDown += ItemsControlEx_PreviewKeyDown;
         }
 
+        // 判断当前焦点是否在指定列表项内部。
+        private static bool IsItemFocused(object item, FrameworkElement focusedElement)
+        {
+            if (item == null || focusedElement == null)
+            {
+                return false;
+            }
+
+            if (item == focusedElement)
+            {
+                return true;
+            }
+
+            var itemElement = item as DependencyObject;
+            var current = focusedElement as DependencyObject;
+            while (itemElement != null && current != null)
+            {
+                if (current == itemElement)
+                {
+                    return true;
+                }
+
+                current = GetParent(current);
+            }
+
+            return false;
+        }
+
+        // 获取视觉树或逻辑树父级。
+        private static DependencyObject GetParent(DependencyObject element)
+        {
+            DependencyObject parent = null;
+            try
+            {
+                parent = VisualTreeHelper.GetParent(element);
+            }
+            catch (InvalidOperationException)
+            {
+            }
+
+            return parent ?? LogicalTreeHelper.GetParent(element);
+        }
+
         private void ItemsControlEx_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             var focusedElem = Keyboard.FocusedElement as FrameworkElement;
@@ -62,7 +105,7 @@ namespace Playnite.FullscreenApp.Controls
                             lastItem = VisualTreeHelper.GetChild(lastItem, 0);
                         }
 
-                        if (lastItem == currentElem)
+                        if (IsItemFocused(lastItem, currentElem))
                         {
                             focusedElem?.MoveFocus(new TraversalRequest(FocusNavigationDirection.Right));
                             e.Handled = true;
@@ -80,7 +123,7 @@ namespace Playnite.FullscreenApp.Controls
                             firstElem = VisualTreeHelper.GetChild(firstElem, 0);
                         }
 
-                        if (firstElem == currentElem)
+                        if (IsItemFocused(firstElem, currentElem))
                         {
                             focusedElem?.MoveFocus(new TraversalRequest(FocusNavigationDirection.Left));
                             e.Handled = true;
@@ -111,7 +154,7 @@ namespace Playnite.FullscreenApp.Controls
                             lastItem = VisualTreeHelper.GetChild(lastItem, 0);
                         }
 
-                        if (lastItem == currentElem)
+                        if (IsItemFocused(lastItem, currentElem))
                         {
                             focusedElem?.MoveFocus(new TraversalRequest(FocusNavigationDirection.Down));
                             e.Handled = true;
@@ -129,7 +172,7 @@ namespace Playnite.FullscreenApp.Controls
                             firstElem = VisualTreeHelper.GetChild(firstElem, 0);
                         }
 
-                        if (firstElem == currentElem)
+                        if (IsItemFocused(firstElem, currentElem))
                         {
                             focusedElem?.MoveFocus(new TraversalRequest(FocusNavigationDirection.Up));
                             e.Handled = true;

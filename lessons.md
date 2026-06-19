@@ -10,6 +10,14 @@
 - 2026-06-19：快捷键设置必须支持 F5 这类单键；空修饰键是合法配置，不能自动改回 Ctrl/Shift。
 - 2026-06-19：全局热键接收器不能用普通 0x0 HwndSource 窗口；必须挂到 HWND_MESSAGE，避免桌面露出小白窗。
 - 2026-06-19：本地 exe 元数据插件不能承诺覆盖所有游戏；只能严格识别已知本地格式，例如 steam_appid.txt、AppId=、TENOKE id= 或本地封面文件。
+- 2026-06-19：Playnite 游戏中截图成功提示不能用 ShowMessage 弹窗；应使用通知中心，并让已打开的截图页面通过保存事件自动刷新。
+- 2026-06-19：全屏模式里不要用普通插件弹窗承载主要页面；手柄场景关闭路径不直观，应优先嵌入全屏首页或使用原生可返回的页面结构。
+- 2026-06-19：Playnite 全屏顶部新增入口要参考 Recently Played 这类栏目行为；入口应切换主内容区，并让方向键/手柄方向键控制内容滚动，不能做成孤立弹窗或纯展示文字。
 - 2026-06-19：Playnite 启动前 PowerShell 脚本不要在成功路径 Write-Output 中文内容；成功应静默，失败提示尽量用 ASCII，避免 Playnite 弹窗乱码或误报。
+- 2026-06-19：Playnite 插件展示自定义卡片不要用默认 ListView；默认 ListViewItem 模板可能吞掉 DataTemplate 内容，应优先用 ItemsControl 承载。
 - 2026-06-19：掌机无鼠标场景下，LunaTranslator OCR 不应依赖手动框选；启动前脚本要写固定 ocrregions，并触发显示范围框热键。
+- 2026-06-19：如果 Playnite 全屏主程序无法构建，不要把插件入口方案绑定到新 exe；优先用主题插槽和插件自身状态实现，保证能同步到当前安装版。
 - 2026-06-19：LunaTranslator 写入 ocrregions 只解决坐标；必须同时开启 sourcestatus2.ocr 和 ocr.local。若进程 MainWindowHandle=0，热键无法显示范围框，应先处理正常 UI 启动。
+- 2026-06-19：Playnite 全屏顶部栏目要跟原生栏目语言一致；如果 All/Favorites/Recently Played 都是英文，自定义入口也只改顶部显示名，例如 Play Time，不要顺手改插件内全部中文文案。
+- 2026-06-19：Playnite 全屏回顾页里的 ComboBox 不要直接吃默认 SelectionBrush 橙色和负边距边框；应在插件控件内局部覆盖模板，让边框四边均匀且不影响全局主题。
+- 2026-06-20：给 Playnite release 插件同步 DLL 前，必须先确认 Playnite 进程已关闭并核对源码 Release DLL 与用户插件目录 DLL 哈希一致，避免用户实际加载旧界面。

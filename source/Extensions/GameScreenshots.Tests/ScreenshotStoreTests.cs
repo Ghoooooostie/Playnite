@@ -64,6 +64,44 @@ namespace GameScreenshots.Tests
             Assert.AreEqual("伊苏", items[1].GameName);
         }
 
+        [Test]
+        public void Store_deletes_selected_screenshot_files()
+        {
+            var root = CreateTempDirectory();
+            var store = new ScreenshotStore(root);
+            var gameId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+            var first = store.SaveScreenshot(gameId, "潜水员戴夫", new byte[] { 1 }, new DateTime(2026, 6, 20, 8, 0, 0));
+            var second = store.SaveScreenshot(gameId, "潜水员戴夫", new byte[] { 2 }, new DateTime(2026, 6, 20, 8, 0, 1));
+
+            store.DeleteScreenshots(new[] { first });
+
+            Assert.IsFalse(File.Exists(first.FilePath));
+            Assert.IsTrue(File.Exists(second.FilePath));
+            Assert.AreEqual(1, store.LoadGameScreenshots(gameId).Count());
+        }
+
+        [Test]
+        public void Store_rejects_deleting_file_outside_screenshot_root()
+        {
+            var root = CreateTempDirectory();
+            var store = new ScreenshotStore(root);
+            var outsideFile = Path.Combine(CreateTempDirectory(), "20260620-080000.png");
+            File.WriteAllBytes(outsideFile, new byte[] { 1 });
+
+            Assert.Throws<InvalidDataException>(() => store.DeleteScreenshots(new[]
+            {
+                new ScreenshotItem
+                {
+                    GameId = Guid.Parse("66666666-6666-6666-6666-666666666666"),
+                    GameName = "外部文件",
+                    FileName = Path.GetFileName(outsideFile),
+                    FilePath = outsideFile,
+                    CapturedAt = new DateTime(2026, 6, 20, 8, 0, 0)
+                }
+            }));
+            Assert.IsTrue(File.Exists(outsideFile));
+        }
+
         // 创建测试临时目录。
         private static string CreateTempDirectory()
         {

@@ -17,6 +17,8 @@ namespace GameScreenshots
         private readonly IScreenshotMessageService messages;
         private readonly Game game;
         private string title;
+        private bool isManaging;
+        private int selectedCount;
         private bool disposed;
 
         public ObservableCollection<ScreenshotItem> Screenshots { get; private set; }
@@ -24,6 +26,9 @@ namespace GameScreenshots
         public ICommand RefreshCommand { get; private set; }
         public ICommand CaptureCommand { get; private set; }
         public ICommand OpenScreenshotCommand { get; private set; }
+        public ICommand ToggleManagementCommand { get; private set; }
+        public ICommand ToggleSelectionCommand { get; private set; }
+        public ICommand DeleteSelectedCommand { get; private set; }
 
         public string Title
         {
@@ -34,6 +39,23 @@ namespace GameScreenshots
         public bool IsGameScope
         {
             get { return game != null; }
+        }
+
+        public bool IsManaging
+        {
+            get { return isManaging; }
+            private set { SetValue(ref isManaging, value, "IsManaging", "ManagementButtonText"); }
+        }
+
+        public int SelectedCount
+        {
+            get { return selectedCount; }
+            private set { SetValue(ref selectedCount, value); }
+        }
+
+        public string ManagementButtonText
+        {
+            get { return IsManaging ? "完成" : "管理"; }
         }
 
         public GameScreenshotsViewModel(
@@ -56,6 +78,9 @@ namespace GameScreenshots
             RefreshCommand = new RelayCommand(Refresh);
             CaptureCommand = new RelayCommand(Capture, CanCapture);
             OpenScreenshotCommand = new RelayCommand<ScreenshotItem>(OpenScreenshot);
+            ToggleManagementCommand = new RelayCommand(ToggleManagement);
+            ToggleSelectionCommand = new RelayCommand<ScreenshotItem>(ToggleSelection);
+            DeleteSelectedCommand = new RelayCommand(DeleteSelected, HasSelection);
             Title = game == null ? "截图画廊" : "截图 - " + game.Name;
             if (screenshotService != null)
             {
@@ -76,6 +101,7 @@ namespace GameScreenshots
             }
 
             RefreshGroups(items);
+            UpdateSelectedCount();
         }
 
         // 按游戏整理画廊截图分组。
@@ -152,12 +178,76 @@ namespace GameScreenshots
         // 打开截图文件。
         private void OpenScreenshot(ScreenshotItem item)
         {
+            if (IsManaging)
+            {
+                ToggleSelection(item);
+                return;
+            }
+
             if (item == null)
             {
                 return;
             }
 
             ScreenshotFileOpener.Open(item.FilePath);
+        }
+
+        // 切换管理模式。
+        private void ToggleManagement()
+        {
+            IsManaging = !IsManaging;
+            if (!IsManaging)
+            {
+                ClearSelection();
+            }
+        }
+
+        // 切换截图选中状态。
+        private void ToggleSelection(ScreenshotItem item)
+        {
+            if (!IsManaging || item == null)
+            {
+                return;
+            }
+
+            item.IsSelected = !item.IsSelected;
+            UpdateSelectedCount();
+        }
+
+        // 删除当前选中的截图。
+        private void DeleteSelected()
+        {
+            var selected = Screenshots.Where(a => a.IsSelected).ToList();
+            if (selected.Count == 0)
+            {
+                return;
+            }
+
+            store.DeleteScreenshots(selected);
+            Refresh();
+        }
+
+        // 判断是否有选中截图。
+        private bool HasSelection()
+        {
+            return SelectedCount > 0;
+        }
+
+        // 清空截图选择。
+        private void ClearSelection()
+        {
+            foreach (var item in Screenshots)
+            {
+                item.IsSelected = false;
+            }
+
+            UpdateSelectedCount();
+        }
+
+        // 更新选中数量。
+        private void UpdateSelectedCount()
+        {
+            SelectedCount = Screenshots.Count(a => a.IsSelected);
         }
 
         // 截图保存后自动刷新当前页面。

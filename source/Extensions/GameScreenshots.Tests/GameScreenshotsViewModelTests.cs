@@ -96,6 +96,69 @@ namespace GameScreenshots.Tests
         }
 
         [Test]
+        public void Delete_selected_screenshots_removes_files_and_refreshes_gallery_groups()
+        {
+            var store = new FakeScreenshotStore();
+            var firstGame = Guid.Parse("11111111-1111-1111-1111-111111111111");
+            var secondGame = Guid.Parse("22222222-2222-2222-2222-222222222222");
+            var first = CreateItem(firstGame, "Dave the Diver", "20260620-100000.png", new DateTime(2026, 6, 20, 10, 0, 0));
+            var second = CreateItem(firstGame, "Dave the Diver", "20260620-100100.png", new DateTime(2026, 6, 20, 10, 1, 0));
+            var third = CreateItem(secondGame, "ANGEL WHISPER", "20260620-110000.png", new DateTime(2026, 6, 20, 11, 0, 0));
+            store.Items.Add(first);
+            store.Items.Add(second);
+            store.Items.Add(third);
+            var viewModel = new GameScreenshotsViewModel(store, null, null, null);
+
+            viewModel.ToggleManagementCommand.Execute(null);
+            viewModel.ToggleSelectionCommand.Execute(first);
+            viewModel.ToggleSelectionCommand.Execute(third);
+            viewModel.DeleteSelectedCommand.Execute(null);
+
+            Assert.IsTrue(viewModel.IsManaging);
+            Assert.AreEqual(1, store.Items.Count);
+            Assert.AreEqual(second.FileName, store.Items[0].FileName);
+            Assert.AreEqual(2, store.DeletedItems.Count);
+            Assert.AreEqual(1, viewModel.Screenshots.Count);
+            Assert.AreEqual(1, viewModel.ScreenshotGroups.Count);
+            Assert.AreEqual("Dave the Diver", viewModel.ScreenshotGroups[0].GameName);
+            Assert.AreEqual(0, viewModel.SelectedCount);
+        }
+
+        [Test]
+        public void Leaving_management_clears_selected_screenshots()
+        {
+            var store = new FakeScreenshotStore();
+            var item = CreateItem(
+                Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                "Dave the Diver",
+                "20260620-100000.png",
+                new DateTime(2026, 6, 20, 10, 0, 0));
+            store.Items.Add(item);
+            var viewModel = new GameScreenshotsViewModel(store, null, null, null);
+
+            viewModel.ToggleManagementCommand.Execute(null);
+            viewModel.ToggleSelectionCommand.Execute(item);
+            viewModel.ToggleManagementCommand.Execute(null);
+
+            Assert.IsFalse(viewModel.IsManaging);
+            Assert.IsFalse(item.IsSelected);
+            Assert.AreEqual(0, viewModel.SelectedCount);
+        }
+
+        [Test]
+        public void Management_button_text_changes_with_management_mode()
+        {
+            var store = new FakeScreenshotStore();
+            var viewModel = new GameScreenshotsViewModel(store, null, null, null);
+
+            Assert.AreEqual("管理", viewModel.ManagementButtonText);
+
+            viewModel.ToggleManagementCommand.Execute(null);
+
+            Assert.AreEqual("完成", viewModel.ManagementButtonText);
+        }
+
+        [Test]
         public void Disposed_view_does_not_refresh_after_screenshot_is_saved()
         {
             var store = new FakeScreenshotStore();
@@ -116,14 +179,29 @@ namespace GameScreenshots.Tests
             Assert.AreEqual(0, viewModel.Screenshots.Count);
         }
 
+        // 创建测试截图项。
+        private static ScreenshotItem CreateItem(Guid gameId, string gameName, string fileName, DateTime capturedAt)
+        {
+            return new ScreenshotItem
+            {
+                GameId = gameId,
+                GameName = gameName,
+                FileName = fileName,
+                FilePath = fileName,
+                CapturedAt = capturedAt
+            };
+        }
+
         // 测试用截图存储。
         private class FakeScreenshotStore : IScreenshotStore
         {
             public List<ScreenshotItem> Items { get; private set; }
+            public List<ScreenshotItem> DeletedItems { get; private set; }
 
             public FakeScreenshotStore()
             {
                 Items = new List<ScreenshotItem>();
+                DeletedItems = new List<ScreenshotItem>();
             }
 
             public ScreenshotItem SaveScreenshot(Guid gameId, string gameName, byte[] pngBytes, DateTime capturedAt)
@@ -139,6 +217,15 @@ namespace GameScreenshots.Tests
             public IEnumerable<ScreenshotItem> LoadAllScreenshots()
             {
                 return Items;
+            }
+
+            public void DeleteScreenshots(IEnumerable<ScreenshotItem> screenshots)
+            {
+                foreach (var item in screenshots.ToList())
+                {
+                    DeletedItems.Add(item);
+                    Items.RemoveAll(a => a.FilePath == item.FilePath);
+                }
             }
         }
 

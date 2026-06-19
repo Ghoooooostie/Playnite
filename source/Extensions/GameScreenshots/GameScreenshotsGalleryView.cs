@@ -40,6 +40,8 @@ namespace GameScreenshots
             };
             DockPanel.SetDock(actions, Dock.Right);
             actions.Children.Add(CreateButton("刷新", "RefreshCommand"));
+            actions.Children.Add(CreateButton("管理", "ToggleManagementCommand", "ManagementButtonText"));
+            actions.Children.Add(CreateButton("删除所选", "DeleteSelectedCommand"));
             toolbar.Children.Add(actions);
 
             var title = CreateText(28, FontWeights.SemiBold);
@@ -121,6 +123,18 @@ namespace GameScreenshots
             border.AddHandler(UIElement.MouseLeftButtonUpEvent, new MouseButtonEventHandler(OpenScreenshotFromItem));
 
             var panel = new FrameworkElementFactory(typeof(StackPanel));
+            var check = new FrameworkElementFactory(typeof(CheckBox));
+            check.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Right);
+            check.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 0, 6));
+            check.SetValue(UIElement.IsHitTestVisibleProperty, false);
+            check.SetBinding(ToggleButton.IsCheckedProperty, new Binding("IsSelected") { Mode = BindingMode.TwoWay });
+            check.SetBinding(UIElement.VisibilityProperty, new Binding("DataContext.IsManaging")
+            {
+                RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UserControl), 1),
+                Converter = new BooleanToVisibilityConverter()
+            });
+            panel.AppendChild(check);
+
             var image = new FrameworkElementFactory(typeof(Image));
             image.SetValue(FrameworkElement.HeightProperty, 120d);
             image.SetValue(Image.StretchProperty, Stretch.UniformToFill);
@@ -161,7 +175,7 @@ namespace GameScreenshots
         }
 
         // 创建按钮。
-        private Button CreateButton(string text, string commandPath)
+        private Button CreateButton(string text, string commandPath, string contentPath = null)
         {
             var button = new Button
             {
@@ -171,6 +185,11 @@ namespace GameScreenshots
                 MinWidth = 72
             };
             button.SetBinding(Button.CommandProperty, new Binding(commandPath));
+            if (!string.IsNullOrWhiteSpace(contentPath))
+            {
+                button.SetBinding(ContentControl.ContentProperty, new Binding(contentPath));
+            }
+
             return button;
         }
 

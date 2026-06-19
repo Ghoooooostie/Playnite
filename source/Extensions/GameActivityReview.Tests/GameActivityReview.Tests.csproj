@@ -38,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActivityReviewCalculatorTests.cs" />
+    <Compile Include="GameActivityReviewPluginTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\PlayniteSDK\Playnite.SDK.csproj">

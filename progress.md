@@ -1,0 +1,45 @@
+# 进度记录
+
+- 2026-06-19：修复 SwitchLocalMetadata 对动态 HFS0 头 XCI 的读取，`レンドフルール` 已能读出封面。
+- 已确认用户选择“全支持”。
+- 已读取 Playnite 播放动作接入点、模拟器定义、扩展项目结构。
+- 已决定新增独立 Playnite 插件，不混改已有 SwitchLocalMetadata 和 GameActivityReview。
+- 新增隐藏模拟器启动插件项目和核心测试。
+- 自查发现 Process 跟踪按进程名会受同名实例干扰，已改为默认跟踪本次启动的进程树。
+- NUnit 首次运行结果：通过 3，失败 1；失败为测试路径字面值写错，已修正测试数据。
+- 补充红灯测试：选择模拟器动作和带脚本配置，初次运行结果为通过 4，失败 2。
+- 实现选择模拟器动作支持，并拒绝带预执行、后执行、退出脚本的模拟器配置。
+- 最终验证：测试总数 6，通过 6，失败 0。
+- 已生成 artifacts/EmulatorQuickLaunchHide-1.0.pext，包内仅包含 extension.yaml 和 EmulatorQuickLaunchHide.dll。
+- 用户反馈“隐藏启动模拟器”出现在启动动作里不符合预期，已确认旧实现方向不对。
+- 已改为核心启动事件标记：插件不再新增播放动作，只在模拟器启动前设置隐藏窗口标记。
+- 已改 Playnite 核心模拟器启动路径，读取隐藏窗口标记并用隐藏窗口参数启动模拟器进程。
+- 已生成 artifacts/EmulatorQuickLaunchHide-1.1.pext，包内仅包含 extension.yaml 和 EmulatorQuickLaunchHide.dll。
+- 最终插件验证：测试总数 9，通过 9，失败 0。
+- Playnite 完整构建未完成：本机缺 Windows SDK AxImp.exe 和 VS 版 MSBuild，旧 Framework MSBuild 不支持当前项目 C# 7.3。
+- 2026-06-19：开始新增截图插件功能，先切换任务计划并读取现有插件结构。
+- 2026-06-19：确认截图插件需要独立插件项目；全局快捷键需要同步改 Playnite 核心 API。
+- 2026-06-19：写入截图插件实现计划，范围限定为独立 Playnite 插件，不改核心。
+- 2026-06-19：写入截图插件实现计划，范围限定为独立 Playnite 插件，不改核心。
+- 2026-06-19：新增 GameScreenshots 空插件项目和红灯测试。
+- 2026-06-19：实现截图模型和 ScreenshotStore。
+- 2026-06-19：实现截图设置、屏幕捕获、截图服务和热键服务。
+- 2026-06-19：实现 Playnite 适配器和截图视图模型。
+- 2026-06-19：实现截图画廊和单个游戏截图窗口。
+- 2026-06-19：实现 GameScreenshotsPlugin，并把新源码加入插件项目。
+- 2026-06-19：新增 GameScreenshots.TestRunner 轻量测试运行器。
+- 2026-06-19：截图元数据改用 DataContractJsonSerializer，并修正测试假服务初始化。
+- 2026-06-19：生成 artifacts/GameScreenshots-1.0.pext，包内包含 extension.yaml 和 GameScreenshots.dll。
+- 2026-06-19：修正后将 GameScreenshots 版本升为 1.1，准备重新打包。
+- 2026-06-19：最终验证通过：测试 7 通过 0 失败；Release 构建成功；GameScreenshots-1.1.pext 包内容正确。
+- 2026-06-19：为快捷键自动录入新增红灯测试。
+- 2026-06-19：实现截图插件设置页点击后自动录入快捷键。
+- 2026-06-19：新增 message-only 热键窗口红灯测试。
+- 2026-06-19：热键服务改为 message-only window，避免露出小窗口。
+- 2026-06-19：GameScreenshots 1.2 最终验证通过：测试 9 通过 0 失败，Release 构建成功，包内容正确。
+- 2026-06-19：GameScreenshots 1.3 修复截图页面/画廊不刷新，新增自定义截图目录，保存成功改为通知，测试 16 通过 0 失败，Release 构建和包内容验证通过。
+
+- 2026-06-19：GameScreenshots 1.4 增加全屏首页截图区域，测试 18 通过 0 失败，Release 构建成功，包内容正确。
+- 2026-06-19：GameScreenshots 1.5 将截图页和画廊页改为 ScrollViewer + ItemsControl，测试 20 通过 0 失败，Release 构建成功，包内容正确。
+- 2026-06-20：GameScreenshots 1.6 增加截图画廊按游戏分组，测试 21 通过 0 失败，Release 构建成功，包内容正确。
+- 2026-06-20：GameScreenshots 1.7 新增截图管理、多选和删除，测试 28 通过 0 失败，Release 构建成功，包内容正确。

@@ -1,0 +1,17 @@
+# 发现记录
+
+- SwitchLocalMetadata 旧逻辑把 XCI 根分区数据起点固定为 `0xF200`，部分 XCI 的根分区 HFS0 头不是固定大小，会导致 secure 分区偏移算错。
+- Playnite 默认模拟器启动在 `GenericGameController.StartEmulatorProcess` 中直接调用 `ProcessStarter.StartProcess`，默认会显示窗口。
+- 插件 SDK 提供 `GetPlayActions`，可以新增自定义播放动作并由插件自行启动。
+- `OnGameStarting` 虽可取消默认启动，但不能可靠修改默认进程启动窗口样式。
+- 要让原启动入口自动隐藏，核心必须在 `OnGameStartingEventArgs` 暴露隐藏窗口标记，并由 `GenericGameController.StartEmulatorProcess` 读取。
+- 纯插件取消默认启动再自行启动会破坏 Playnite 原生运行跟踪；继续使用 `GetPlayActions` 会再次要求用户手动选额外动作。
+- 内置模拟器定义可从 `IPlayniteAPI.Emulation.Emulators` 读取；自定义模拟器配置可从数据库 `Emulators` 读取。
+- 脚本型启动和带预执行/后执行/退出脚本的配置不能严谨隐藏，插件直接报错。
+- Playnite 扩展包为 zip 格式 `.pext`，包内不能包含 `Playnite.SDK.dll`。
+- GameActivityReview 是独立 GenericPlugin，侧边栏通过 GetSidebarItems 暴露页面，数据放在插件用户目录。截图功能适合沿用独立 GenericPlugin 结构。
+- Playnite SDK 目前没有插件注册全局快捷键接口；WindowBase 已有 RegisterHotKeyHandler，现有系统搜索快捷键直接在 DesktopAppViewModel 使用。要让截图插件支持全局快捷键，需要新增可控的主视图快捷键 API。
+- 默认 Playnite 桌面主题没有截图插件详情页占位；纯插件不能直接注入默认游戏详情页。截图入口改为游戏右键菜单窗口，避免改核心或主题。
+- Playnite 默认桌面主题的 ListViewItem 使用 GridViewRowPresenter，截图插件用 ListView 承载卡片会只显示行背景，改用 ItemsControl 可避免主题吞掉缩略图内容。
+- 截图画廊平铺所有截图会混杂多个游戏；ViewModel 应提供按 GameId 聚合的 ScreenshotGroups，画廊只绑定分组数据。
+- 截图删除必须由 ScreenshotStore 校验路径，只允许删除截图根目录内的 PNG，避免 UI 传入任意路径导致误删。

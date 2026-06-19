@@ -1,6 +1,7 @@
 // 文件用途：定义截图插件的核心模型和服务接口。
 using Playnite.SDK.Models;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
@@ -10,13 +11,21 @@ using System.Windows.Media.Imaging;
 namespace GameScreenshots
 {
     // 单张截图的展示和文件信息。
-    public class ScreenshotItem
+    public class ScreenshotItem : ObservableObject
     {
+        private bool isSelected;
+
         public Guid GameId { get; set; }
         public string GameName { get; set; }
         public string FileName { get; set; }
         public string FilePath { get; set; }
         public DateTime CapturedAt { get; set; }
+
+        public bool IsSelected
+        {
+            get { return isSelected; }
+            set { SetValue(ref isSelected, value); }
+        }
 
         public string CapturedAtText
         {
@@ -106,6 +115,7 @@ namespace GameScreenshots
         ScreenshotItem SaveScreenshot(Guid gameId, string gameName, byte[] pngBytes, DateTime capturedAt);
         System.Collections.Generic.IEnumerable<ScreenshotItem> LoadGameScreenshots(Guid gameId);
         System.Collections.Generic.IEnumerable<ScreenshotItem> LoadAllScreenshots();
+        void DeleteScreenshots(System.Collections.Generic.IEnumerable<ScreenshotItem> screenshots);
     }
 
     // 负责截取当前屏幕。

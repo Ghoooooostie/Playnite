@@ -1,7 +1,7 @@
-# CONTEXT
+﻿# CONTEXT
 
-当前目标：记录 Playnite 自动启动 LunaTranslator OCR 的完整使用方法。
-当前进度：已新增 docs/tools/LunaTranslator-OCR-Playnite.md，记录脚本位置、Playnite 配置位置、LunaTranslator 配置项、固定 OCR 区域、常见问题和验证命令。
-下一步：按文档在 Playnite 启动前/游戏关闭后脚本中填写对应命令。
-注意事项：LunaTranslator 必须用普通 LunaTranslator.exe，避免管理员版或后台异常进程导致范围框不显示。
-最后更新时间：2026-06-19 23:58:00
+当前目标：给 GameScreenshots 新增截图管理功能，支持多选和删除。
+当前进度：已实现管理/完成按钮、删除所选按钮、卡片勾选、多选删除、路径安全校验，生成 GameScreenshots 1.7 包，并把当前 Playnite 插件目录指向 GameScreenshots.1.7.dll。
+下一步：重启 Playnite 后在截图页或截图画廊进入管理模式，勾选截图并删除验证。
+注意事项：删除只允许插件截图目录内的 PNG 文件；其它任务的未提交改动未处理。
+最后更新时间：2026-06-20 00:35:00

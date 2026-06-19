@@ -88,10 +88,44 @@ namespace GameScreenshots
             return items.OrderByDescending(a => a.CapturedAt).ToList();
         }
 
+        // 删除指定截图文件。
+        public void DeleteScreenshots(IEnumerable<ScreenshotItem> screenshots)
+        {
+            if (screenshots == null)
+            {
+                throw new ArgumentNullException("screenshots");
+            }
+
+            foreach (var item in screenshots.ToList())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.FilePath))
+                {
+                    continue;
+                }
+
+                var filePath = Path.GetFullPath(item.FilePath);
+                ValidateDeletePath(filePath);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+            }
+        }
+
         // 生成游戏截图目录。
         private string GetGameDirectory(Guid gameId)
         {
             return Path.Combine(screenshotsRoot, gameId.ToString());
+        }
+
+        // 确保删除范围只在截图根目录内。
+        private void ValidateDeletePath(string filePath)
+        {
+            var root = Path.GetFullPath(screenshotsRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!filePath.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !string.Equals(Path.GetExtension(filePath), ".png", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException("只能删除截图目录内的 PNG 文件：" + filePath);
+            }
         }
 
         // 写入游戏元数据。
