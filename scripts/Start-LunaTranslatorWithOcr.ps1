@@ -1,7 +1,9 @@
-# 文件用途：在 Playnite 启动游戏前重启 LunaTranslator，写入固定 OCR 区域并让配置生效。
+# 文件用途：在 Playnite 的 Switch 游戏启动前重启 LunaTranslator，写入固定 OCR 区域并让配置生效。
 # 相关模块：Playnite 启动前脚本、LunaTranslator userconfig/config.json。
 param(
     [string]$LunaRoot = "D:\Program_Files\LunaTranslator_x64_win10",
+    [string[]]$PlatformNames,
+    [string[]]$SwitchPlatformNames = @("Nintendo Switch", "Switch"),
     [int]$Left = 395,
     [int]$Top = 761,
     [int]$Right = 1254,
@@ -9,6 +11,7 @@ param(
     [int]$ExitTimeoutSeconds = 5,
     [int]$LaunchWaitSeconds = 3,
     [string]$ShowRangeHotkey = "Alt+W",
+    [string]$BindWindowHotkey = "Alt+B",
     [switch]$MultiRegion,
     [switch]$SkipLaunch,
     [switch]$SkipShowRange
@@ -16,6 +19,47 @@ param(
 
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+# 读取 Playnite 当前游戏的平台名称，用于只让 Switch 游戏启动露娜。
+function Get-PlaynitePlatformNames {
+    if ($PlatformNames -and $PlatformNames.Count -gt 0) {
+        return @($PlatformNames)
+    }
+
+    $gameVariable = Get-Variable -Name "Game" -ErrorAction SilentlyContinue
+    if ($gameVariable) {
+        $gameValue = $gameVariable.Value
+        if ($gameValue -and $gameValue.Platforms) {
+            $names = @()
+            foreach ($platform in $gameValue.Platforms) {
+                if ($platform -and -not [string]::IsNullOrWhiteSpace($platform.Name)) {
+                    $names += $platform.Name
+                }
+            }
+            return $names
+        }
+    }
+
+    return @()
+}
+
+# 判断当前游戏是否是 Switch；没有平台信息时继续执行，避免单游戏脚本手动调用失效。
+function Test-SwitchGame {
+    $names = @(Get-PlaynitePlatformNames)
+    if ($names.Count -eq 0) {
+        return $true
+    }
+
+    foreach ($name in $names) {
+        foreach ($switchName in $SwitchPlatformNames) {
+            if ([string]::Equals($name, $switchName, [System.StringComparison]::OrdinalIgnoreCase)) {
+                return $true
+            }
+        }
+    }
+
+    return $false
+}
 
 # 写入 UTF-8 JSON 文件，避免 PowerShell 默认编码影响配置。
 function Save-Utf8JsonFile {
@@ -25,7 +69,8 @@ function Save-Utf8JsonFile {
     )
 
     $json = $Value | ConvertTo-Json -Depth 100
-    [System.IO.File]::WriteAllText($Path, $json, [System.Text.UTF8Encoding]::new($false))
+    $encoding = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($Path, $json, $encoding)
 }
 
 # 验证 OCR 区域必须是有效矩形，避免写坏 LunaTranslator 配置。
@@ -82,12 +127,10 @@ function Enable-LunaBuiltInOcr {
 
     $Config.ocr.local.use = $true
 }
-# 给 LunaTranslator 写入显示 OCR 范围框的热键，供无鼠标设备自动触发。
-function Set-LunaShowRangeHotkey {
-    param(
-        [Parameter(Mandatory = $true)]$Config,
-        [Parameter(Mandatory = $true)][string]$Hotkey
-    )
+
+# 确保 LunaTranslator 快捷键配置节点存在。
+function Ensure-LunaQuickSetting {
+    param([Parameter(Mandatory = $true)]$Config)
 
     if (-not $Config.quick_setting) {
         $Config | Add-Member -MemberType NoteProperty -Name "quick_setting" -Value ([pscustomobject]@{})
@@ -96,13 +139,38 @@ function Set-LunaShowRangeHotkey {
     if (-not $Config.quick_setting.all) {
         $Config.quick_setting | Add-Member -MemberType NoteProperty -Name "all" -Value ([pscustomobject]@{})
     }
+}
 
+# 给 LunaTranslator 写入显示 OCR 范围框的热键，供无鼠标设备自动触发。
+function Set-LunaShowRangeHotkey {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)][string]$Hotkey
+    )
+
+    Ensure-LunaQuickSetting -Config $Config
     if (-not $Config.quick_setting.all._14) {
         $Config.quick_setting.all | Add-Member -MemberType NoteProperty -Name "_14" -Value ([pscustomobject]@{})
     }
 
     $Config.quick_setting.all._14.use = $true
     $Config.quick_setting.all._14.keystring = $Hotkey
+}
+
+# 给 LunaTranslator 写入绑定窗口热键；启动后脚本会自动触发它。
+function Set-LunaBindWindowHotkey {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)][string]$Hotkey
+    )
+
+    Ensure-LunaQuickSetting -Config $Config
+    if (-not $Config.quick_setting.all._15) {
+        $Config.quick_setting.all | Add-Member -MemberType NoteProperty -Name "_15" -Value ([pscustomobject]@{})
+    }
+
+    $Config.quick_setting.all._15.use = $true
+    $Config.quick_setting.all._15.keystring = $Hotkey
 }
 
 # 模拟热键，让 LunaTranslator 根据 ocrregions 显示范围框。
@@ -112,6 +180,10 @@ function Send-LunaShowRangeHotkey {
     Add-Type -AssemblyName System.Windows.Forms
     $sendKeys = $Hotkey.ToLowerInvariant().Replace("alt+", "%").Replace("ctrl+", "^").Replace("shift+", "+").ToUpperInvariant()
     [System.Windows.Forms.SendKeys]::SendWait($sendKeys)
+}
+
+if (-not (Test-SwitchGame)) {
+    return
 }
 
 Assert-ValidOcrRegion -Left $Left -Top $Top -Right $Right -Bottom $Bottom
@@ -135,6 +207,7 @@ $config.showrangeafterrangeselect = $true
 Enable-LunaBuiltInOcr -Config $config
 $config.ocrregions = [object[]](,([object[]]@([object[]]@($Left, $Top), [object[]]@($Right, $Bottom))))
 Set-LunaShowRangeHotkey -Config $config -Hotkey $ShowRangeHotkey
+Set-LunaBindWindowHotkey -Config $config -Hotkey $BindWindowHotkey
 
 Save-Utf8JsonFile -Path $configPath -Value $config
 
