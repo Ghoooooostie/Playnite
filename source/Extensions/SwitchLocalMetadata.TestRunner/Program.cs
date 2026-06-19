@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using SwitchLocalMetadata;
@@ -80,8 +81,64 @@ namespace SwitchLocalMetadata.TestRunner
                 return nspResult;
             }
 
+            var dynamicHeaderXciResult = RunDynamicHeaderXciReaderTest(settings);
+            if (dynamicHeaderXciResult != 0)
+            {
+                return dynamicHeaderXciResult;
+            }
+
             Console.WriteLine("PASS: " + result.TitleId + " " + result.DisplayName + " " + result.Publisher + " " + result.ImageFileName + " " + result.ImageBytes.Length);
             return 0;
+        }
+
+        // 验证根分区头不是固定大小时，也能算出 secure 分区数据起点。
+        private static int RunDynamicHeaderXciReaderTest(SwitchLocalMetadataSettings settings)
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), "SwitchLocalMetadataTests", Path.GetRandomFileName());
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                var xciPath = Path.Combine(tempDir, "dynamic-header.xci");
+                CreateSyntheticXciWithDynamicRootHeader(xciPath);
+                var output = "Root Partition:" + Environment.NewLine
+                    + "    Offset:                         000000000100" + Environment.NewLine
+                    + "    Files:                          root:/secure                                             000000000040-000000000100";
+
+                var fileBaseOffset = HactoolnetSwitchMetadataExtractor.CalculateXciSecureDataOffset(xciPath, output);
+                if (fileBaseOffset != 0x2B0)
+                {
+                    Console.Error.WriteLine("FAIL: wrong dynamic header XCI data offset " + fileBaseOffset.ToString("X"));
+                    return 1;
+                }
+
+                return 0;
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        // 创建只包含 HFS0 头的最小 XCI，用来验证偏移计算。
+        private static void CreateSyntheticXciWithDynamicRootHeader(string path)
+        {
+            File.WriteAllBytes(path, new byte[0x400]);
+            WriteHfs0Header(path, 0x100, 1, 0x30);
+            WriteHfs0Header(path, 0x1C0, 2, 0x60);
+        }
+
+        // 写入 HFS0 头部必要字段。
+        private static void WriteHfs0Header(string path, long offset, uint fileCount, uint stringTableSize)
+        {
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.None))
+            {
+                stream.Position = offset;
+                var header = new byte[16];
+                Encoding.ASCII.GetBytes("HFS0").CopyTo(header, 0);
+                BitConverter.GetBytes(fileCount).CopyTo(header, 4);
+                BitConverter.GetBytes(stringTableSize).CopyTo(header, 8);
+                stream.Write(header, 0, header.Length);
+            }
         }
 
         private static int RunNspReaderTest(SwitchLocalMetadataSettings settings)

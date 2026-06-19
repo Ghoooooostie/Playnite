@@ -15,6 +15,7 @@ namespace SwitchLocalMetadata
         private const long MaxControlNcaSize = 64 * 1024 * 1024;
         private static readonly Regex XciNcaRegex = new Regex(@"secure:/([^\s]+\.nca)\s+([0-9A-Fa-f]+)-([0-9A-Fa-f]+)", RegexOptions.Compiled);
         private static readonly Regex NspNcaRegex = new Regex(@"pfs0:/([^\s]+?\.nca)([0-9A-Fa-f]+)-([0-9A-Fa-f]+)", RegexOptions.Compiled);
+        private static readonly Regex RootPartitionOffsetRegex = new Regex(@"Root Partition:[\s\S]*?Offset:\s+([0-9A-Fa-f]+)", RegexOptions.Compiled);
         private static readonly Regex RootSecureRegex = new Regex(@"root:/secure\s+([0-9A-Fa-f]+)-([0-9A-Fa-f]+)", RegexOptions.Compiled);
         private readonly SwitchLocalMetadataSettings settings;
 
@@ -74,9 +75,7 @@ namespace SwitchLocalMetadata
             var output = RunHactoolnet("-t xci " + Quote(path));
             var contentDir = Path.Combine(workDir, "content");
             Directory.CreateDirectory(contentDir);
-            var rootSecureOffset = ExtractRootSecureOffset(output);
-            var securePartitionOffset = 0xF200 + rootSecureOffset;
-            var fileBaseOffset = securePartitionOffset + ReadHfs0HeaderSize(path, securePartitionOffset);
+            var fileBaseOffset = CalculateXciSecureDataOffset(path, output);
 
             foreach (var entry in ParseXciNcaEntries(output).Where(entry => entry.Length <= MaxControlNcaSize))
             {
@@ -157,6 +156,16 @@ namespace SwitchLocalMetadata
                 fileSize);
         }
 
+        // 计算 XCI secure 分区内文件数据的起始偏移。
+        internal static long CalculateXciSecureDataOffset(string path, string output)
+        {
+            var rootSecureOffset = ExtractRootSecureOffset(output);
+            var rootPartitionOffset = ExtractRootPartitionOffset(output);
+            var rootDataOffset = rootPartitionOffset + ReadHfs0HeaderSize(path, rootPartitionOffset);
+            var securePartitionOffset = rootDataOffset + rootSecureOffset;
+            return securePartitionOffset + ReadHfs0HeaderSize(path, securePartitionOffset);
+        }
+
         private static IEnumerable<NcaContainerEntry> ParseXciNcaEntries(string output)
         {
             foreach (Match match in XciNcaRegex.Matches(output ?? string.Empty))
@@ -183,6 +192,18 @@ namespace SwitchLocalMetadata
             if (!match.Success)
             {
                 throw new InvalidDataException("无法解析 XCI secure 分区偏移。");
+            }
+
+            return long.Parse(match.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+        }
+
+        // 从 hactoolnet 输出中解析 XCI 根分区的起始偏移。
+        private static long ExtractRootPartitionOffset(string output)
+        {
+            var match = RootPartitionOffsetRegex.Match(output ?? string.Empty);
+            if (!match.Success)
+            {
+                throw new InvalidDataException("无法解析 XCI root 分区偏移。");
             }
 
             return long.Parse(match.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
@@ -326,4 +347,3 @@ namespace SwitchLocalMetadata
         }
     }
 }
-
