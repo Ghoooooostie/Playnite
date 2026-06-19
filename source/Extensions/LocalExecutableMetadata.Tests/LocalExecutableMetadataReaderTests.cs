@@ -11,6 +11,7 @@ namespace LocalExecutableMetadata.Tests
     public class LocalExecutableMetadataReaderTests
     {
         private const string SampleExePath = @"H:\game\房产达人2\House Flipper 2\HouseFlipper2.exe";
+        private const string FeedTheCupsExePath = @"H:\game\Feed.the.Cups.Build.20057193\Feed the Cups.exe";
 
         [Test]
         public void TryRead_reads_unity_app_info_and_steam_app_id_from_sample_game()
@@ -38,6 +39,19 @@ namespace LocalExecutableMetadata.Tests
             Assert.That(result.IconFileName, Is.EqualTo("HouseFlipper2.png"));
             Assert.That(result.IconBytes, Is.Not.Null);
             Assert.That(result.IconBytes.Length, Is.GreaterThan(100));
+        }
+
+        [Test]
+        public void TryRead_returns_steam_cover_when_local_cover_is_missing()
+        {
+            Assert.That(File.Exists(FeedTheCupsExePath), Is.True, "Feed the Cups 示例 exe 文件不存在。请确认 H: 盘已挂载。");
+
+            var result = LocalExecutableMetadataReader.TryRead(FeedTheCupsExePath);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.SteamAppId, Is.EqualTo("2336220"));
+            Assert.That(result.CoverImagePath, Is.EqualTo("https://cdn.cloudflare.steamstatic.com/steam/apps/2336220/library_600x900.jpg"));
+            Assert.That(result.ToCoverImageFile().Path, Is.EqualTo(result.CoverImagePath));
         }
 
         [Test]

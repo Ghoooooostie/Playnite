@@ -29,6 +29,7 @@ namespace LocalExecutableMetadata
                 InstallDirectory = installDirectory,
                 InstallSize = CalculateDirectorySize(installDirectory)
             };
+            result.CoverImagePath = ResolveCoverImagePath(installDirectory, result.SteamAppId);
 
             var icon = ExtractIcon(executablePath);
             result.IconFileName = icon.FileName;
@@ -69,13 +70,19 @@ namespace LocalExecutableMetadata
                 return null;
             }
 
-            var steamAppIdPath = Path.Combine(installDirectory, "steam_appid.txt");
-            if (File.Exists(steamAppIdPath))
+            foreach (var steamAppIdPath in new[]
             {
-                var value = File.ReadAllLines(steamAppIdPath).FirstOrDefault(line => !string.IsNullOrWhiteSpace(line))?.Trim();
-                if (IsNumeric(value))
+                Path.Combine(installDirectory, "steam_appid.txt"),
+                Path.Combine(installDirectory, "steam_settings", "steam_appid.txt")
+            })
+            {
+                if (File.Exists(steamAppIdPath))
                 {
-                    return value;
+                    var value = File.ReadAllLines(steamAppIdPath).FirstOrDefault(line => !string.IsNullOrWhiteSpace(line))?.Trim();
+                    if (IsNumeric(value))
+                    {
+                        return value;
+                    }
                 }
             }
 
@@ -94,6 +101,55 @@ namespace LocalExecutableMetadata
                     {
                         return value;
                     }
+                }
+            }
+
+            return null;
+        }
+
+        // 优先使用本地封面，找不到时用 Steam 竖版封面 URL。
+        private static string ResolveCoverImagePath(string installDirectory, string steamAppId)
+        {
+            var localCover = FindLocalCoverImage(installDirectory);
+            if (!string.IsNullOrWhiteSpace(localCover))
+            {
+                return localCover;
+            }
+
+            return string.IsNullOrWhiteSpace(steamAppId)
+                ? null
+                : "https://cdn.cloudflare.steamstatic.com/steam/apps/" + steamAppId + "/library_600x900.jpg";
+        }
+
+        private static string FindLocalCoverImage(string installDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(installDirectory) || !Directory.Exists(installDirectory))
+            {
+                return null;
+            }
+
+            var names = new[]
+            {
+                "cover.jpg",
+                "cover.png",
+                "poster.jpg",
+                "poster.png",
+                "library_600x900.jpg",
+                "library_600x900.png"
+            };
+
+            foreach (var name in names)
+            {
+                var path = Path.Combine(installDirectory, name);
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+
+                var steamSettingsPath = Path.Combine(installDirectory, "steam_settings", name);
+                if (File.Exists(steamSettingsPath))
+                {
+                    return steamSettingsPath;
                 }
             }
 

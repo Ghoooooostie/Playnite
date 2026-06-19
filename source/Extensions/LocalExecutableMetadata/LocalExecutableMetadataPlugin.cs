@@ -22,6 +22,7 @@ namespace LocalExecutableMetadata
             MetadataField.Platform,
             MetadataField.Links,
             MetadataField.Icon,
+            MetadataField.CoverImage,
             MetadataField.InstallSize
         };
 
@@ -62,6 +63,7 @@ namespace LocalExecutableMetadata
                     MetadataField.Platform,
                     MetadataField.Links,
                     MetadataField.Icon,
+                    MetadataField.CoverImage,
                     MetadataField.InstallSize
                 };
         }
@@ -112,6 +114,12 @@ namespace LocalExecutableMetadata
         public override MetadataFile GetIcon(GetMetadataFieldArgs args)
         {
             return gameInfo?.ToIconFile();
+        }
+
+        // 使用本地封面，或者根据 Steam AppId 提供 Steam 竖版封面。
+        public override MetadataFile GetCoverImage(GetMetadataFieldArgs args)
+        {
+            return gameInfo?.ToCoverImageFile();
         }
 
         // 安装大小用游戏目录大小表达。

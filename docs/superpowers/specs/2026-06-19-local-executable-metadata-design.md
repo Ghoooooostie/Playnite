@@ -11,8 +11,8 @@ The plugin handles local `.exe` games only. It does not replace or modify the ex
 ## Design
 
 - `LocalExecutablePathResolver` finds a game executable from Playnite file actions first, then from the install directory first level.
-- `LocalExecutableMetadataReader` reads Windows version info, Unity `*_Data/app.info`, Steam AppId values from `steam_appid.txt` or local `.ini` files, associated exe icon, and install folder size.
-- `LocalExecutableMetadataProvider` exposes Playnite fields: name, developers, publishers, platform, links, icon, and install size.
+- `LocalExecutableMetadataReader` reads Windows version info, Unity `*_Data/app.info`, Steam AppId values from `steam_appid.txt` or local `.ini` files, associated exe icon, cover image, and install folder size.
+- `LocalExecutableMetadataProvider` exposes Playnite fields: name, developers, publishers, platform, links, icon, cover image, and install size.
 - The platform is reported as `pc_windows`.
 
 ## Validation
@@ -23,3 +23,5 @@ The sample `HouseFlipper2.exe` must return:
 - Company: `Frozen District`
 - Steam AppId: `1190970`
 - Icon file: `HouseFlipper2.png`
+
+For games without a local cover file, the provider returns the Steam `library_600x900.jpg` URL derived from the locally detected Steam AppId.

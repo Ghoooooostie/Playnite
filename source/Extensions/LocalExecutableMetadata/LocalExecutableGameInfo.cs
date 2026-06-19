@@ -19,6 +19,8 @@ namespace LocalExecutableMetadata
 
         public byte[] IconBytes { get; set; }
 
+        public string CoverImagePath { get; set; }
+
         public ulong InstallSize { get; set; }
 
         // 把 exe 图标转换为 Playnite 可接收的元数据文件。
@@ -27,6 +29,14 @@ namespace LocalExecutableMetadata
             return IconBytes == null || string.IsNullOrWhiteSpace(IconFileName)
                 ? null
                 : new MetadataFile(IconFileName, IconBytes);
+        }
+
+        // 把本地封面路径或 Steam 封面 URL 转换为 Playnite 可接收的元数据文件。
+        public MetadataFile ToCoverImageFile()
+        {
+            return string.IsNullOrWhiteSpace(CoverImagePath)
+                ? null
+                : new MetadataFile(CoverImagePath);
         }
     }
 }
