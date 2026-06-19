@@ -154,67 +154,293 @@ namespace GameActivityReview
         private UIElement BuildDailyChart()
         {
             var panel = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
-            panel.Children.Add(CreateText("每日游玩时长", 22, FontWeights.SemiBold));
-
-            var scope = CreateText(string.Empty, 13, FontWeights.Normal);
-            scope.Margin = new Thickness(0, 4, 0, 12);
-            scope.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
-            scope.SetBinding(TextBlock.TextProperty, new Binding("Summary.DateRangeText") { StringFormat = "{0}" });
-            panel.Children.Add(scope);
-
-            var list = new ItemsControl();
-            list.SetBinding(ItemsControl.ItemsSourceProperty, new Binding("Summary.DailyItems"));
-            list.ItemTemplate = BuildDailyChartTemplate();
-            panel.Children.Add(list);
+            panel.Children.Add(BuildChartOverviewCard());
+            panel.Children.Add(BuildTopGameBars());
             return panel;
         }
 
-        // 创建每日图表行模板。
-        private DataTemplate BuildDailyChartTemplate()
+        // 创建参考图样式的总览卡片。
+        private UIElement BuildChartOverviewCard()
+        {
+            var border = CreatePanelBorder();
+            border.Margin = new Thickness(0, 0, 0, 18);
+            border.Padding = new Thickness(18);
+
+            var panel = new StackPanel();
+            panel.Children.Add(BuildChartHeader());
+            panel.Children.Add(BuildChartMainNumbers());
+            panel.Children.Add(BuildVerticalDailyChart());
+            border.Child = panel;
+            return border;
+        }
+
+        // 创建图表卡片顶部范围信息。
+        private UIElement BuildChartHeader()
+        {
+            var header = new DockPanel { Margin = new Thickness(0, 0, 0, 14) };
+
+            var range = CreateText(string.Empty, 13, FontWeights.Normal);
+            range.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
+            range.SetBinding(TextBlock.TextProperty, new Binding("Summary.DateRangeText"));
+            DockPanel.SetDock(range, Dock.Right);
+            header.Children.Add(range);
+
+            var title = CreateText(string.Empty, 18, FontWeights.SemiBold);
+            title.SetBinding(TextBlock.TextProperty, new Binding("Summary.PeriodTitle"));
+            header.Children.Add(title);
+            return header;
+        }
+
+        // 创建总时长和日均两组核心数字。
+        private UIElement BuildChartMainNumbers()
+        {
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 18) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var totalPanel = new StackPanel();
+            totalPanel.Children.Add(CreateSmallMutedText("总游玩时长"));
+            var total = CreateText(string.Empty, 34, FontWeights.SemiBold);
+            total.Margin = new Thickness(0, 4, 0, 0);
+            total.TextTrimming = TextTrimming.CharacterEllipsis;
+            total.SetBinding(TextBlock.TextProperty, new Binding("Summary.TotalTimeText"));
+            totalPanel.Children.Add(total);
+            Grid.SetColumn(totalPanel, 0);
+            grid.Children.Add(totalPanel);
+
+            var averagePanel = new StackPanel { Margin = new Thickness(18, 0, 0, 0) };
+            var averageLabel = CreateSmallMutedText(string.Empty);
+            averageLabel.SetBinding(TextBlock.TextProperty, new Binding("Summary.AverageLabel"));
+            averagePanel.Children.Add(averageLabel);
+            var average = CreateText(string.Empty, 22, FontWeights.SemiBold);
+            average.Margin = new Thickness(0, 8, 0, 0);
+            average.SetBinding(TextBlock.TextProperty, new Binding("Summary.AverageDailyTimeText"));
+            averagePanel.Children.Add(average);
+            Grid.SetColumn(averagePanel, 1);
+            grid.Children.Add(averagePanel);
+            return grid;
+        }
+
+        // 创建每日竖向柱状图。
+        private UIElement BuildVerticalDailyChart()
+        {
+            var panel = new StackPanel();
+            var axis = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
+
+            var average = CreateText("平均", 12, FontWeights.Normal);
+            average.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
+            DockPanel.SetDock(average, Dock.Left);
+            axis.Children.Add(average);
+
+            var unit = CreateText(string.Empty, 12, FontWeights.Normal);
+            unit.HorizontalAlignment = HorizontalAlignment.Right;
+            unit.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
+            unit.SetBinding(TextBlock.TextProperty, new Binding("Summary.ChartUnitLabel"));
+            axis.Children.Add(unit);
+            panel.Children.Add(axis);
+
+            var chartFrame = new Border
+            {
+                BorderThickness = new Thickness(0, 1, 0, 1),
+                Padding = new Thickness(0, 8, 0, 4),
+                MinHeight = 168
+            };
+            chartFrame.SetResourceReference(Border.BorderBrushProperty, "NormalBorderBrush");
+
+            var scroll = new ScrollViewer
+            {
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Disabled
+            };
+
+            var items = new ItemsControl();
+            items.SetBinding(ItemsControl.ItemsSourceProperty, new Binding("Summary.DailyItems"));
+            items.ItemsPanel = BuildHorizontalItemsPanel();
+            items.ItemTemplate = BuildVerticalDailyChartTemplate();
+            scroll.Content = items;
+            chartFrame.Child = scroll;
+            panel.Children.Add(chartFrame);
+            return panel;
+        }
+
+        // 创建均分铺满宽度的 ItemsPanel。
+        private ItemsPanelTemplate BuildHorizontalItemsPanel()
+        {
+            var panelFactory = new FrameworkElementFactory(typeof(UniformGrid));
+            panelFactory.SetValue(UniformGrid.RowsProperty, 1);
+            return new ItemsPanelTemplate(panelFactory);
+        }
+
+        // 创建每日竖向柱模板。
+        private DataTemplate BuildVerticalDailyChartTemplate()
         {
             var template = new DataTemplate(typeof(GameActivityDailyItem));
-            var row = new FrameworkElementFactory(typeof(Grid));
-            row.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 0, 8));
-            row.SetValue(FrameworkElement.MinHeightProperty, 28d);
+            var root = new FrameworkElementFactory(typeof(Grid));
+            root.SetValue(FrameworkElement.MarginProperty, new Thickness(0));
 
-            var labelColumn = new FrameworkElementFactory(typeof(ColumnDefinition));
-            labelColumn.SetValue(ColumnDefinition.WidthProperty, new GridLength(72));
-            row.AppendChild(labelColumn);
+            var chartRow = new FrameworkElementFactory(typeof(RowDefinition));
+            chartRow.SetValue(RowDefinition.HeightProperty, new GridLength(132));
+            root.AppendChild(chartRow);
 
-            var barColumn = new FrameworkElementFactory(typeof(ColumnDefinition));
-            barColumn.SetValue(ColumnDefinition.WidthProperty, new GridLength(1, GridUnitType.Star));
-            row.AppendChild(barColumn);
-
-            var timeColumn = new FrameworkElementFactory(typeof(ColumnDefinition));
-            timeColumn.SetValue(ColumnDefinition.WidthProperty, new GridLength(110));
-            row.AppendChild(timeColumn);
-
-            var label = new FrameworkElementFactory(typeof(TextBlock));
-            label.SetBinding(TextBlock.TextProperty, new Binding("Label"));
-            label.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
-            label.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-            label.SetValue(Grid.ColumnProperty, 0);
-            row.AppendChild(label);
+            var labelRow = new FrameworkElementFactory(typeof(RowDefinition));
+            labelRow.SetValue(RowDefinition.HeightProperty, GridLength.Auto);
+            root.AppendChild(labelRow);
 
             var bar = new FrameworkElementFactory(typeof(ProgressBar));
             bar.SetValue(ProgressBar.MaximumProperty, 100d);
-            bar.SetValue(FrameworkElement.HeightProperty, 18d);
-            bar.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
-            bar.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 10, 0));
+            bar.SetValue(ProgressBar.OrientationProperty, Orientation.Vertical);
+            bar.SetValue(FrameworkElement.WidthProperty, 22d);
+            bar.SetValue(FrameworkElement.HeightProperty, 126d);
+            bar.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            bar.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Bottom);
             bar.SetBinding(ProgressBar.ValueProperty, new Binding("Percent"));
-            bar.SetValue(Grid.ColumnProperty, 1);
-            row.AppendChild(bar);
+            bar.SetBinding(FrameworkElement.ToolTipProperty, new Binding("TimeText"));
+            bar.SetValue(Grid.RowProperty, 0);
+            root.AppendChild(bar);
+
+            var label = new FrameworkElementFactory(typeof(TextBlock));
+            label.SetBinding(TextBlock.TextProperty, new Binding("Label"));
+            label.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 8, 0, 0));
+            label.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Center);
+            label.SetValue(TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
+            label.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
+            label.SetValue(Grid.RowProperty, 1);
+            root.AppendChild(label);
+
+            template.VisualTree = root;
+            return template;
+        }
+
+        // 创建常用游戏排行条区域。
+        private UIElement BuildTopGameBars()
+        {
+            var panel = new StackPanel();
+            var header = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+            header.Children.Add(CreateText("常用", 22, FontWeights.SemiBold));
+            panel.Children.Add(header);
+
+            var border = CreatePanelBorder();
+            border.Padding = new Thickness(16);
+
+            var list = new ItemsControl();
+            list.SetBinding(ItemsControl.ItemsSourceProperty, new Binding("TopGames"));
+            list.ItemTemplate = BuildTopGameBarTemplate();
+            border.Child = list;
+            panel.Children.Add(border);
+            return panel;
+        }
+
+        // 创建常用游戏横向排行条模板。
+        private DataTemplate BuildTopGameBarTemplate()
+        {
+            var template = new DataTemplate(typeof(GameActivityRankItem));
+            var row = new FrameworkElementFactory(typeof(Grid));
+            row.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 0, 18));
+            row.SetValue(FrameworkElement.MinHeightProperty, 58d);
+
+            var iconColumn = new FrameworkElementFactory(typeof(ColumnDefinition));
+            iconColumn.SetValue(ColumnDefinition.WidthProperty, new GridLength(58));
+            row.AppendChild(iconColumn);
+
+            var contentColumn = new FrameworkElementFactory(typeof(ColumnDefinition));
+            contentColumn.SetValue(ColumnDefinition.WidthProperty, new GridLength(1, GridUnitType.Star));
+            row.AppendChild(contentColumn);
+
+            var timeColumn = new FrameworkElementFactory(typeof(ColumnDefinition));
+            timeColumn.SetValue(ColumnDefinition.WidthProperty, new GridLength(112));
+            row.AppendChild(timeColumn);
+
+            var icon = BuildGameIconTemplatePart();
+            icon.SetValue(Grid.ColumnProperty, 0);
+            row.AppendChild(icon);
+
+            var content = new FrameworkElementFactory(typeof(Grid));
+            content.SetValue(Grid.ColumnProperty, 1);
+            content.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 12, 0));
+
+            var nameRow = new FrameworkElementFactory(typeof(RowDefinition));
+            nameRow.SetValue(RowDefinition.HeightProperty, GridLength.Auto);
+            content.AppendChild(nameRow);
+
+            var barRow = new FrameworkElementFactory(typeof(RowDefinition));
+            barRow.SetValue(RowDefinition.HeightProperty, GridLength.Auto);
+            content.AppendChild(barRow);
+
+            var name = new FrameworkElementFactory(typeof(TextBlock));
+            name.SetBinding(TextBlock.TextProperty, new Binding("GameName"));
+            name.SetValue(TextBlock.FontSizeProperty, 18d);
+            name.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold);
+            name.SetValue(TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
+            name.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+            name.SetValue(Grid.RowProperty, 0);
+            content.AppendChild(name);
+
+            var bar = new FrameworkElementFactory(typeof(ProgressBar));
+            bar.SetValue(ProgressBar.MaximumProperty, 100d);
+            bar.SetValue(FrameworkElement.HeightProperty, 8d);
+            bar.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 10, 0, 0));
+            bar.SetBinding(ProgressBar.ValueProperty, new Binding("Percent"));
+            bar.SetValue(Grid.RowProperty, 1);
+            content.AppendChild(bar);
+            row.AppendChild(content);
 
             var time = new FrameworkElementFactory(typeof(TextBlock));
             time.SetBinding(TextBlock.TextProperty, new Binding("TimeText"));
             time.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
             time.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Right);
+            time.SetValue(TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
             time.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
             time.SetValue(Grid.ColumnProperty, 2);
             row.AppendChild(time);
 
             template.VisualTree = row;
             return template;
+        }
+
+        // 创建常用游戏图标模板片段。
+        private FrameworkElementFactory BuildGameIconTemplatePart()
+        {
+            var frame = new FrameworkElementFactory(typeof(Border));
+            frame.SetValue(FrameworkElement.WidthProperty, 46d);
+            frame.SetValue(FrameworkElement.HeightProperty, 46d);
+            frame.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Left);
+            frame.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            frame.SetValue(Border.CornerRadiusProperty, new CornerRadius(6));
+            frame.SetResourceReference(Border.BackgroundProperty, "ControlBackgroundBrush");
+            frame.SetResourceReference(Border.BorderBrushProperty, "NormalBorderBrush");
+            frame.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+
+            var grid = new FrameworkElementFactory(typeof(Grid));
+
+            var initial = new FrameworkElementFactory(typeof(TextBlock));
+            initial.SetBinding(TextBlock.TextProperty, new Binding("Initial"));
+            initial.SetValue(TextBlock.FontSizeProperty, 18d);
+            initial.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold);
+            initial.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Center);
+            initial.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            initial.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            initial.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
+            grid.AppendChild(initial);
+
+            var image = new FrameworkElementFactory(typeof(Image));
+            image.SetBinding(Image.SourceProperty, new Binding("IconPath"));
+            image.SetValue(Image.StretchProperty, Stretch.UniformToFill);
+            image.SetValue(FrameworkElement.WidthProperty, 44d);
+            image.SetValue(FrameworkElement.HeightProperty, 44d);
+            image.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            image.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            grid.AppendChild(image);
+
+            frame.AppendChild(grid);
+            return frame;
+        }
+
+        // 创建弱化的小字标签。
+        private TextBlock CreateSmallMutedText(string text)
+        {
+            var block = CreateText(text, 13, FontWeights.Normal);
+            block.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
+            return block;
         }
         // 创建回顾预览区域。
         private UIElement BuildReviewPreview()

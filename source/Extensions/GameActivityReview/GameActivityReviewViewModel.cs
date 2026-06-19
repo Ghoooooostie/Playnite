@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Input;
@@ -90,6 +91,7 @@ namespace GameActivityReview
                 TopGames.Clear();
                 foreach (var item in Summary.TopGames.Take(20))
                 {
+                    FillGameIcon(item);
                     TopGames.Add(item);
                 }
             }
@@ -98,6 +100,25 @@ namespace GameActivityReview
                 api.Dialogs.ShowErrorMessage(e.Message, "游戏时光回顾");
                 throw;
             }
+        }
+
+        // 填充常用游戏列表里的图标路径。
+        private void FillGameIcon(GameActivityRankItem item)
+        {
+            if (item == null || item.GameId == Guid.Empty)
+            {
+                return;
+            }
+
+            var game = api.Database.Games.Get(item.GameId);
+            if (game == null || string.IsNullOrWhiteSpace(game.Icon))
+            {
+                return;
+            }
+
+            item.IconPath = File.Exists(game.Icon) || game.Icon.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? game.Icon
+                : api.Database.GetFullFilePath(game.Icon);
         }
 
         // 保存当前摘要为文本海报。

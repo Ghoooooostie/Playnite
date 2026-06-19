@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
 namespace GameActivityReview.TestRunner
 {
@@ -24,6 +25,11 @@ namespace GameActivityReview.TestRunner
             RunTest(ContentHasListAndChartTabs, ref passed, ref failed);
             RunTest(DailyChartSplitsSessionAcrossDays, ref passed, ref failed);
             RunTest(DayPeriodCountsOnlyToday, ref passed, ref failed);
+            RunTest(AllPeriodBuildsChartFromPlayedDays, ref passed, ref failed);
+            RunTest(ChartViewUsesOverviewCard, ref passed, ref failed);
+            RunTest(ChartSummaryIncludesDailyAverageAndGamePercent, ref passed, ref failed);
+            RunTest(ChartUsesFixedBucketsForWeekMonthAndYear, ref passed, ref failed);
+            RunTest(ChartColumnsUseUniformGridToFillWidth, ref passed, ref failed);
 
             Console.WriteLine("Passed=" + passed + " Failed=" + failed);
             return failed == 0 ? 0 : 1;
@@ -96,7 +102,7 @@ namespace GameActivityReview.TestRunner
             };
 
             var summary = ActivityReviewCalculator.BuildSummary(sessions, ActivityReviewPeriod.Month, now);
-            AssertEqual((ulong)3600, summary.TotalSeconds, "month total seconds");
+            AssertEqual((ulong)7200, summary.TotalSeconds, "month total seconds");
             AssertEqual(1, summary.SessionCount, "month session count");
             AssertEqual("跨月游戏", summary.TopGames.Single().GameName, "month top game");
         }
@@ -172,6 +178,37 @@ namespace GameActivityReview.TestRunner
             AssertEqual("今天", summary.DailyItems[0].Label, "day chart label");
         }
 
+        private static void AllPeriodBuildsChartFromPlayedDays()
+        {
+            var now = new DateTime(2026, 6, 17, 12, 0, 0, DateTimeKind.Local);
+            var sessions = new List<GameSessionRecord>
+            {
+                new GameSessionRecord
+                {
+                    GameId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    GameName = "全部游戏一",
+                    StartedAt = new DateTime(2026, 6, 10, 9, 0, 0, DateTimeKind.Local),
+                    EndedAt = new DateTime(2026, 6, 10, 9, 7, 0, DateTimeKind.Local),
+                    DurationSeconds = 420
+                },
+                new GameSessionRecord
+                {
+                    GameId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    GameName = "全部游戏二",
+                    StartedAt = new DateTime(2026, 6, 12, 20, 0, 0, DateTimeKind.Local),
+                    EndedAt = new DateTime(2026, 6, 12, 20, 2, 0, DateTimeKind.Local),
+                    DurationSeconds = 120
+                }
+            };
+
+            var summary = ActivityReviewCalculator.BuildSummary(sessions, ActivityReviewPeriod.All, now);
+            AssertEqual(2, summary.DailyItems.Count, "all chart played day count");
+            AssertEqual(new DateTime(2026, 6, 10), summary.DailyItems[0].Date, "all chart first day");
+            AssertEqual((ulong)420, summary.DailyItems[0].TotalSeconds, "all chart first day seconds");
+            AssertEqual("6-10", summary.DailyItems[0].Label, "all chart first label");
+            AssertEqual(100, summary.DailyItems[0].Percent, "all chart first percent");
+        }
+
         private static void DailyChartSplitsSessionAcrossDays()
         {
             var now = new DateTime(2026, 6, 17, 12, 0, 0, DateTimeKind.Local);
@@ -194,6 +231,125 @@ namespace GameActivityReview.TestRunner
             AssertEqual((ulong)1800, june17.TotalSeconds, "june 17 chart seconds");
             AssertEqual(100, june16.Percent, "june 16 chart percent");
             AssertEqual(100, june17.Percent, "june 17 chart percent");
+        }
+
+        private static void ChartSummaryIncludesDailyAverageAndGamePercent()
+        {
+            var now = new DateTime(2026, 6, 17, 12, 0, 0, DateTimeKind.Local);
+            var sessions = new List<GameSessionRecord>
+            {
+                new GameSessionRecord
+                {
+                    GameId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    GameName = "第一游戏",
+                    StartedAt = new DateTime(2026, 6, 17, 9, 0, 0, DateTimeKind.Local),
+                    EndedAt = new DateTime(2026, 6, 17, 9, 10, 0, DateTimeKind.Local),
+                    DurationSeconds = 600
+                },
+                new GameSessionRecord
+                {
+                    GameId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    GameName = "第二游戏",
+                    StartedAt = new DateTime(2026, 6, 17, 10, 0, 0, DateTimeKind.Local),
+                    EndedAt = new DateTime(2026, 6, 17, 10, 5, 0, DateTimeKind.Local),
+                    DurationSeconds = 300
+                }
+            };
+
+            var summary = ActivityReviewCalculator.BuildSummary(sessions, ActivityReviewPeriod.Day, now);
+            AssertEqual("15 分钟", summary.AverageDailyTimeText, "chart average time");
+            AssertEqual(100, summary.TopGames[0].Percent, "top game percent");
+            AssertEqual(50, summary.TopGames[1].Percent, "second game percent");
+        }
+
+        private static void ChartColumnsUseUniformGridToFillWidth()
+        {
+            var view = (GameActivityReviewView)FormatterServices.GetUninitializedObject(typeof(GameActivityReviewView));
+            var method = typeof(GameActivityReviewView).GetMethod("BuildHorizontalItemsPanel", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (method == null)
+            {
+                throw new InvalidOperationException("BuildHorizontalItemsPanel method missing");
+            }
+
+            var template = method.Invoke(view, null) as ItemsPanelTemplate;
+            if (template == null || template.VisualTree == null)
+            {
+                throw new InvalidOperationException("chart items panel template missing");
+            }
+
+            if (template.VisualTree.Type != typeof(UniformGrid))
+            {
+                throw new InvalidOperationException("chart columns should use UniformGrid to fill the available width");
+            }
+        }
+        private static void ChartUsesFixedBucketsForWeekMonthAndYear()
+        {
+            var now = new DateTime(2026, 6, 17, 12, 0, 0, DateTimeKind.Local);
+            var sessions = new List<GameSessionRecord>
+            {
+                new GameSessionRecord
+                {
+                    GameId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    GameName = "一月游戏",
+                    StartedAt = new DateTime(2026, 1, 5, 20, 0, 0, DateTimeKind.Local),
+                    EndedAt = new DateTime(2026, 1, 5, 21, 0, 0, DateTimeKind.Local),
+                    DurationSeconds = 3600
+                },
+                new GameSessionRecord
+                {
+                    GameId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    GameName = "三月游戏",
+                    StartedAt = new DateTime(2026, 3, 1, 20, 0, 0, DateTimeKind.Local),
+                    EndedAt = new DateTime(2026, 3, 1, 22, 0, 0, DateTimeKind.Local),
+                    DurationSeconds = 7200
+                },
+                new GameSessionRecord
+                {
+                    GameId = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                    GameName = "本月游戏",
+                    StartedAt = new DateTime(2026, 6, 16, 20, 0, 0, DateTimeKind.Local),
+                    EndedAt = new DateTime(2026, 6, 16, 21, 0, 0, DateTimeKind.Local),
+                    DurationSeconds = 3600
+                }
+            };
+
+            var week = ActivityReviewCalculator.BuildSummary(sessions, ActivityReviewPeriod.Week, now);
+            AssertEqual(7, week.DailyItems.Count, "week chart bucket count");
+            AssertEqual("15日", week.DailyItems[0].Label, "week first label");
+            AssertEqual("21日", week.DailyItems[6].Label, "week last label");
+
+            var month = ActivityReviewCalculator.BuildSummary(sessions, ActivityReviewPeriod.Month, now);
+            AssertEqual(30, month.DailyItems.Count, "month chart bucket count");
+            AssertEqual("6-17", month.DailyItems[29].Label, "month last label");
+
+            var year = ActivityReviewCalculator.BuildSummary(sessions, ActivityReviewPeriod.Year, now);
+            AssertEqual(12, year.DailyItems.Count, "year chart bucket count");
+            AssertEqual("1月", year.DailyItems[0].Label, "year first label");
+            AssertEqual((ulong)3600, year.DailyItems[0].TotalSeconds, "year january seconds");
+            AssertEqual("3月", year.DailyItems[2].Label, "year march label");
+            AssertEqual((ulong)7200, year.DailyItems[2].TotalSeconds, "year march seconds");
+            AssertEqual("月均", year.AverageLabel, "year average label");
+            AssertEqual("按月", year.ChartUnitLabel, "year chart unit label");
+        }
+        private static void ChartViewUsesOverviewCard()
+        {
+            var view = (GameActivityReviewView)FormatterServices.GetUninitializedObject(typeof(GameActivityReviewView));
+            var method = typeof(GameActivityReviewView).GetMethod("BuildDailyChart", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (method == null)
+            {
+                throw new InvalidOperationException("BuildDailyChart method missing");
+            }
+
+            var panel = method.Invoke(view, null) as StackPanel;
+            if (panel == null)
+            {
+                throw new InvalidOperationException("chart view should be a StackPanel");
+            }
+
+            if (!panel.Children.OfType<Border>().Any())
+            {
+                throw new InvalidOperationException("chart view should include an overview card");
+            }
         }
 
         private static void ContentHasListAndChartTabs()

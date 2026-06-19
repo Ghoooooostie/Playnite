@@ -29,7 +29,10 @@ namespace GameActivityReview
                 .ThenBy(item => item.GameName, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
 
+            ApplyRankPercent(topGames);
+
             var totalSeconds = (ulong)rows.Sum(slice => (decimal)slice.Seconds);
+            var dailyItems = BuildDailyItems(sessions, window, period);
             var topGame = topGames.FirstOrDefault();
             var summary = new ActivityReviewSummary
             {
@@ -37,10 +40,13 @@ namespace GameActivityReview
                 PeriodTitle = GetPeriodTitle(period),
                 TotalSeconds = totalSeconds,
                 TotalTimeText = FormatSeconds(totalSeconds),
+                AverageDailyTimeText = FormatAverageDailySeconds(totalSeconds, dailyItems.Count),
+                AverageLabel = GetAverageLabel(period),
+                ChartUnitLabel = GetChartUnitLabel(period),
                 SessionCount = rows.Count,
                 GameCount = topGames.Count,
                 TopGames = topGames,
-                DailyItems = BuildDailyItems(sessions, window, period),
+                DailyItems = dailyItems,
                 TopGameName = topGame == null ? "暂无" : topGame.GameName,
                 DateRangeText = FormatDateRange(window.Start, window.End, period)
             };
@@ -78,8 +84,8 @@ namespace GameActivityReview
                     var weekStart = now.Date.AddDays(-GetMondayOffset(now.Date));
                     return new ActivityReviewWindow(weekStart, weekStart.AddDays(7));
                 case ActivityReviewPeriod.Month:
-                    var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, now.Kind);
-                    return new ActivityReviewWindow(monthStart, monthStart.AddMonths(1));
+                    var monthStart = now.Date.AddDays(-29);
+                    return new ActivityReviewWindow(monthStart, now.Date.AddDays(1));
                 case ActivityReviewPeriod.Year:
                     var yearStart = new DateTime(now.Year, 1, 1, 0, 0, 0, now.Kind);
                     return new ActivityReviewWindow(yearStart, yearStart.AddYears(1));
@@ -88,29 +94,56 @@ namespace GameActivityReview
             }
         }
 
-        // 生成每日图表数据。
+        // 计算游戏排行条相对榜首的百分比。
+        private static void ApplyRankPercent(List<GameActivityRankItem> topGames)
+        {
+            var maxSeconds = topGames.Count == 0 ? 0 : topGames.Max(item => item.TotalSeconds);
+            foreach (var item in topGames)
+            {
+                item.Percent = maxSeconds == 0 ? 0 : Math.Max(4, (int)Math.Round(item.TotalSeconds * 100d / maxSeconds));
+            }
+        }
+
+        // 计算图表卡片里的日均时长。
+        private static string FormatAverageDailySeconds(ulong totalSeconds, int dayCount)
+        {
+            if (dayCount <= 0 || totalSeconds == 0)
+            {
+                return FormatSeconds(0);
+            }
+
+            return FormatSeconds((ulong)Math.Round(totalSeconds / (double)dayCount));
+        }
+        // 生成图表时间桶数据。
         private static List<GameActivityDailyItem> BuildDailyItems(IEnumerable<GameSessionRecord> sessions, ActivityReviewWindow window, ActivityReviewPeriod period)
         {
-            if (period == ActivityReviewPeriod.All)
+            var records = (sessions ?? Enumerable.Empty<GameSessionRecord>())
+                .Where(session => session != null && session.EndedAt > session.StartedAt)
+                .ToList();
+
+            if (period == ActivityReviewPeriod.Year)
             {
-                return new List<GameActivityDailyItem>();
+                return BuildMonthlyItems(records, window);
             }
 
-            var days = new Dictionary<DateTime, ulong>();
-            for (var day = window.Start.Date; day < window.End.Date; day = day.AddDays(1))
-            {
-                days[day] = 0;
-            }
+            return BuildDayItems(records, window, period);
+        }
 
-            foreach (var session in sessions ?? Enumerable.Empty<GameSessionRecord>())
+        // 生成按日展示的图表数据。
+        private static List<GameActivityDailyItem> BuildDayItems(List<GameSessionRecord> records, ActivityReviewWindow window, ActivityReviewPeriod period)
+        {
+            var days = period == ActivityReviewPeriod.All ? BuildPlayedDayBuckets(records) : BuildWindowDayBuckets(window);
+            foreach (var session in records)
             {
-                if (session == null || session.EndedAt <= session.StartedAt)
+                var start = period == ActivityReviewPeriod.All ? session.StartedAt.Date : window.Start.Date;
+                var end = period == ActivityReviewPeriod.All ? session.EndedAt.Date.AddDays(1) : window.End.Date;
+                foreach (var day in days.Keys.ToList())
                 {
-                    continue;
-                }
+                    if (day < start || day >= end)
+                    {
+                        continue;
+                    }
 
-                for (var day = window.Start.Date; day < window.End.Date; day = day.AddDays(1))
-                {
                     var seconds = GetOverlapSeconds(session, day, day.AddDays(1));
                     if (seconds > 0)
                     {
@@ -125,11 +158,87 @@ namespace GameActivityReview
                     Date = pair.Key,
                     Label = FormatDailyLabel(pair.Key, period),
                     TotalSeconds = pair.Value,
-                    Percent = maxSeconds == 0 ? 0 : Math.Max(4, (int)Math.Round(pair.Value * 100d / maxSeconds))
+                    Percent = GetPercent(pair.Value, maxSeconds)
                 })
                 .ToList();
         }
 
+        // 生成按月展示的图表数据。
+        private static List<GameActivityDailyItem> BuildMonthlyItems(List<GameSessionRecord> records, ActivityReviewWindow window)
+        {
+            var months = BuildYearMonthBuckets(window.Start);
+            foreach (var session in records)
+            {
+                foreach (var month in months.Keys.ToList())
+                {
+                    var monthEnd = month.AddMonths(1);
+                    var seconds = GetOverlapSeconds(session, month, monthEnd);
+                    if (seconds > 0)
+                    {
+                        months[month] = months[month] + seconds;
+                    }
+                }
+            }
+
+            var maxSeconds = months.Count == 0 ? 0 : months.Values.Max();
+            return months.Select(pair => new GameActivityDailyItem
+                {
+                    Date = pair.Key,
+                    Label = pair.Key.ToString("M月"),
+                    TotalSeconds = pair.Value,
+                    Percent = GetPercent(pair.Value, maxSeconds)
+                })
+                .ToList();
+        }
+
+        // 创建固定范围内的每日桶。
+        private static Dictionary<DateTime, ulong> BuildWindowDayBuckets(ActivityReviewWindow window)
+        {
+            var days = new Dictionary<DateTime, ulong>();
+            for (var day = window.Start.Date; day < window.End.Date; day = day.AddDays(1))
+            {
+                days[day] = 0;
+            }
+
+            return days;
+        }
+
+        // 创建当前年份的 12 个按月桶。
+        private static Dictionary<DateTime, ulong> BuildYearMonthBuckets(DateTime yearStart)
+        {
+            var months = new Dictionary<DateTime, ulong>();
+            var firstMonth = new DateTime(yearStart.Year, 1, 1, 0, 0, 0, yearStart.Kind);
+            for (var month = firstMonth; month < firstMonth.AddYears(1); month = month.AddMonths(1))
+            {
+                months[month] = 0;
+            }
+
+            return months;
+        }
+
+        // 创建全部记录中实际有会话覆盖的每日桶。
+        private static Dictionary<DateTime, ulong> BuildPlayedDayBuckets(IEnumerable<GameSessionRecord> sessions)
+        {
+            var days = new Dictionary<DateTime, ulong>();
+            foreach (var session in sessions)
+            {
+                for (var day = session.StartedAt.Date; day < session.EndedAt.Date.AddDays(1); day = day.AddDays(1))
+                {
+                    if (!days.ContainsKey(day))
+                    {
+                        days[day] = 0;
+                    }
+                }
+            }
+
+            return days;
+        }
+
+        // 计算图表条高度百分比。
+        private static int GetPercent(ulong value, ulong maxValue)
+        {
+            return maxValue == 0 ? 0 : Math.Max(4, (int)Math.Round(value * 100d / maxValue));
+        }
         // 计算一次会话落在范围内的秒数。
         private static ulong GetOverlapSeconds(GameSessionRecord session, DateTime start, DateTime end)
         {
@@ -148,6 +257,17 @@ namespace GameActivityReview
             return (ulong)Math.Floor((overlapEnd - overlapStart).TotalSeconds);
         }
 
+        // 返回均值标题。
+        private static string GetAverageLabel(ActivityReviewPeriod period)
+        {
+            return period == ActivityReviewPeriod.Year ? "月均" : "日均";
+        }
+
+        // 返回图表单位说明。
+        private static string GetChartUnitLabel(ActivityReviewPeriod period)
+        {
+            return period == ActivityReviewPeriod.Year ? "按月" : "每日";
+        }
         // 生成中文回顾文案。
         private static string BuildReviewText(ActivityReviewSummary summary)
         {
@@ -201,7 +321,7 @@ namespace GameActivityReview
                 return "今天";
             }
 
-            if (period == ActivityReviewPeriod.Year)
+            if (period == ActivityReviewPeriod.All || period == ActivityReviewPeriod.Month)
             {
                 return date.ToString("M-d");
             }

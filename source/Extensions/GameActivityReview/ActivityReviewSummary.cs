@@ -11,6 +11,9 @@ namespace GameActivityReview
         public string DateRangeText { get; set; }
         public ulong TotalSeconds { get; set; }
         public string TotalTimeText { get; set; }
+        public string AverageDailyTimeText { get; set; }
+        public string AverageLabel { get; set; }
+        public string ChartUnitLabel { get; set; }
         public int SessionCount { get; set; }
         public int GameCount { get; set; }
         public string TopGameName { get; set; }
@@ -32,6 +35,16 @@ namespace GameActivityReview
         public string GameName { get; set; }
         public ulong TotalSeconds { get; set; }
         public int SessionCount { get; set; }
+        public int Percent { get; set; }
+        public string IconPath { get; set; }
+
+        public string Initial
+        {
+            get
+            {
+                return string.IsNullOrWhiteSpace(GameName) ? "?" : GameName.Substring(0, 1).ToUpperInvariant();
+            }
+        }
 
         public string TimeText
         {
@@ -39,7 +52,7 @@ namespace GameActivityReview
         }
     }
 
-    // 图表中单日的游玩时长。
+    // 图表中单个时间桶的游玩时长。
     public class GameActivityDailyItem
     {
         public DateTime Date { get; set; }
