@@ -21,3 +21,7 @@
 - 2026-06-19：Playnite 全屏顶部栏目要跟原生栏目语言一致；如果 All/Favorites/Recently Played 都是英文，自定义入口也只改顶部显示名，例如 Play Time，不要顺手改插件内全部中文文案。
 - 2026-06-19：Playnite 全屏回顾页里的 ComboBox 不要直接吃默认 SelectionBrush 橙色和负边距边框；应在插件控件内局部覆盖模板，让边框四边均匀且不影响全局主题。
 - 2026-06-20：给 Playnite release 插件同步 DLL 前，必须先确认 Playnite 进程已关闭并核对源码 Release DLL 与用户插件目录 DLL 哈希一致，避免用户实际加载旧界面。
+- 2026-06-20：LunaTranslator 绑定窗口必须放到 Playnite 游戏启动后脚本；启动前还没有模拟器窗口，只能先写配置和启动露娜。
+- 2026-06-20：Playnite 全局游戏启动后脚本可能拿到 StartedProcessId=0；自动化脚本不能因此抛错，应静默跳过或改放到具体游戏/模拟器脚本。
+- 2026-06-20：Playnite 插件如果同时支持桌面和全屏，桌面构造阶段不要提前初始化全屏状态；全屏状态应在 GetGameViewControl 里按需创建，避免桌面版插件加载失败导致入口消失。
+- 2026-06-20：Playnite 全局脚本输入框里不要写复杂的一行脚本块，例如 @(... | ForEach-Object { ... })；优先让脚本自己读取 $Game，只传必要参数。
