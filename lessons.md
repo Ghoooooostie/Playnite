@@ -10,3 +10,6 @@
 - 2026-06-19：快捷键设置必须支持 F5 这类单键；空修饰键是合法配置，不能自动改回 Ctrl/Shift。
 - 2026-06-19：全局热键接收器不能用普通 0x0 HwndSource 窗口；必须挂到 HWND_MESSAGE，避免桌面露出小白窗。
 - 2026-06-19：本地 exe 元数据插件不能承诺覆盖所有游戏；只能严格识别已知本地格式，例如 steam_appid.txt、AppId=、TENOKE id= 或本地封面文件。
+- 2026-06-19：Playnite 启动前 PowerShell 脚本不要在成功路径 Write-Output 中文内容；成功应静默，失败提示尽量用 ASCII，避免 Playnite 弹窗乱码或误报。
+- 2026-06-19：掌机无鼠标场景下，LunaTranslator OCR 不应依赖手动框选；启动前脚本要写固定 ocrregions，并触发显示范围框热键。
+- 2026-06-19：LunaTranslator 写入 ocrregions 只解决坐标；必须同时开启 sourcestatus2.ocr 和 ocr.local。若进程 MainWindowHandle=0，热键无法显示范围框，应先处理正常 UI 启动。

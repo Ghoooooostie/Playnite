@@ -1,0 +1,95 @@
+﻿# Playnite 启动 LunaTranslator OCR 流程
+
+## 目标
+
+在掌机无鼠标场景下，通过 Playnite 启动游戏前自动打开 LunaTranslator，并固定 OCR 区域，不需要每次手动框选。
+
+## 文件位置
+
+| 用途 | 文件 |
+|---|---|
+| 游戏启动前脚本 | `D:\My_Project\Playnite\scripts\Start-LunaTranslatorWithOcr.ps1` |
+| 游戏关闭后脚本 | `D:\My_Project\Playnite\scripts\Stop-LunaTranslator.ps1` |
+| LunaTranslator 程序目录 | `D:\Program_Files\LunaTranslator_x64_win10` |
+| LunaTranslator 配置文件 | `D:\Program_Files\LunaTranslator_x64_win10\userconfig\config.json` |
+
+## Playnite 里怎么填
+
+在游戏编辑页或全局脚本里设置：
+
+| Playnite 位置 | 内容 |
+|---|---|
+| 游戏启动前脚本 | `powershell -ExecutionPolicy Bypass -File "D:\My_Project\Playnite\scripts\Start-LunaTranslatorWithOcr.ps1"` |
+| 游戏关闭后脚本 | `powershell -ExecutionPolicy Bypass -File "D:\My_Project\Playnite\scripts\Stop-LunaTranslator.ps1"` |
+
+如果只想给某个游戏使用，就填在该游戏的脚本页；如果所有游戏都要用，就填在 Playnite 全局脚本里。
+
+## 启动前脚本做什么
+
+`Start-LunaTranslatorWithOcr.ps1` 会做这些事：
+
+| 动作 | 说明 |
+|---|---|
+| 写入 OCR 区域 | 写入 `ocrregions`，当前区域是 `[[[395,761],[1254,993]]]` |
+| 开启 OCR 输入源 | 设置 `sourcestatus2.ocr.use = true` |
+| 开启内置 OCR | 只启用 `ocr.local.use = true`，关闭其他 OCR 引擎 |
+| 设置范围框热键 | 设置“显示/隐藏范围框”为 `Alt+W` |
+| 启动 LunaTranslator | 使用普通 `LunaTranslator.exe` 启动 |
+| 自动触发范围框 | 启动后模拟 `Alt+W`，让 LunaTranslator 显示配置里的 OCR 区域 |
+
+## LunaTranslator 要注意什么
+
+| 项目 | 要求 |
+|---|---|
+| 启动程序 | 使用 `LunaTranslator.exe`，不要用 `LunaTranslator_admin.exe` |
+| 运行权限 | Playnite 和 LunaTranslator 权限要一致，推荐都用普通权限 |
+| 残留进程 | 如果 LunaTranslator 变成后台异常进程或管理员进程，需要手动退出一次 |
+| OCR 区域 | 不需要每次框选；只有想换字幕位置时才改坐标 |
+
+当前坐标在启动脚本参数里：
+
+```powershell
+[int]$Left = 395,
+[int]$Top = 761,
+[int]$Right = 1254,
+[int]$Bottom = 993,
+```
+
+也可以在 Playnite 脚本里覆盖：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "D:\My_Project\Playnite\scripts\Start-LunaTranslatorWithOcr.ps1" -Left 395 -Top 761 -Right 1254 -Bottom 993
+```
+
+## 游戏关闭后脚本做什么
+
+`Stop-LunaTranslator.ps1` 会尝试关闭 LunaTranslator 主窗口，避免下次启动时沿用旧内存状态。
+
+它不会强杀管理员权限进程。如果关不掉，说明当前 LunaTranslator 权限比 Playnite 高，需要手动退出一次。
+
+## 常见问题
+
+| 现象 | 处理 |
+|---|---|
+| 配置里有坐标，但看不到框 | 先确认 LunaTranslator 是正常 UI 进程，不是 `MainWindowHandle=0` 的后台异常进程 |
+| Playnite 弹脚本失败 | 检查是否有管理员版 LunaTranslator 残留，先手动退出 |
+| 没开启内置 OCR | 启动前脚本会强制开启 `sourcestatus2.ocr` 和 `ocr.local` |
+| 掌机没鼠标不能框选 | 不需要框选，固定坐标由脚本写入 |
+
+## 验证命令
+
+只验证配置写入，不启动 LunaTranslator：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "D:\My_Project\Playnite\scripts\Start-LunaTranslatorWithOcr.ps1" -SkipLaunch
+```
+
+检查配置结果：
+
+```powershell
+$json = Get-Content -Encoding UTF8 "D:\Program_Files\LunaTranslator_x64_win10\userconfig\config.json" -Raw | ConvertFrom-Json
+$json.sourcestatus2.ocr.use
+$json.ocr.local.use
+$json.quick_setting.all._14.keystring
+$json.ocrregions | ConvertTo-Json -Depth 10
+```
