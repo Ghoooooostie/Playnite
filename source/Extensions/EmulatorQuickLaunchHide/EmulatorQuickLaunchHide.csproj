@@ -48,7 +48,16 @@
     <Compile Include="EmulatorQuickLaunchHidePlugin.cs" />
     <Compile Include="EmulatorQuickLaunchHideSettings.cs" />
     <Compile Include="EmulatorQuickLaunchHideSettingsView.cs" />
+    <Compile Include="EmulatorSessionMonitor.cs" />
+    <Compile Include="EmulatorWindowHider.cs" />
     <Compile Include="ExitHotkeyBox.cs" />
+    <Compile Include="HiddenEmulatorActionBuilder.cs" />
+    <Compile Include="HiddenEmulatorLaunchAction.cs" />
+    <Compile Include="HiddenEmulatorLaunchRequest.cs" />
+    <Compile Include="HiddenEmulatorLaunchResolver.cs" />
+    <Compile Include="HiddenEmulatorPlayController.cs" />
+    <Compile Include="HiddenEmulatorProcessStartInfoFactory.cs" />
+    <Compile Include="HiddenEmulatorVariableExpander.cs" />
     <Compile Include="PlayniteWindowActivator.cs" />
     <Compile Include="ProcessWindowHandoff.cs" />
     <Compile Include="StartupOverlay.cs" />
