@@ -10,7 +10,7 @@ namespace GameActivityReview
         public static string Build(ActivityReviewSummary summary)
         {
             var builder = new StringBuilder();
-            builder.AppendLine("我的游戏时光回顾");
+            builder.AppendLine("我的游戏时长");
             builder.AppendLine(summary.PeriodTitle + " · " + summary.DateRangeText);
             builder.AppendLine(summary.ReviewText);
             builder.AppendLine();

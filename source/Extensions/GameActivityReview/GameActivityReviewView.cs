@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
@@ -8,7 +8,7 @@ using System.Windows.Media;
 
 namespace GameActivityReview
 {
-    // 游戏时光回顾侧边栏页面。
+    // 游戏时长侧边栏页面。
     public class GameActivityReviewView : UserControl
     {
         private readonly bool fullscreenMode;
@@ -71,7 +71,7 @@ namespace GameActivityReview
             actions.Children.Add(CreateButton("生成分享海报", "ExportCommand"));
             toolbar.Children.Add(actions);
 
-            var title = CreateText("游戏时光回顾", 28, FontWeights.SemiBold);
+            var title = CreateText("游戏时长", 28, FontWeights.SemiBold);
             toolbar.Children.Add(title);
             return toolbar;
         }
@@ -107,7 +107,7 @@ namespace GameActivityReview
         // 创建说明区。
         private UIElement BuildIntro()
         {
-            var text = CreateText("根据每一次启动与退出记录统计真实游玩时长，支持全部、今天、本周、本月、今年回顾。", 14, FontWeights.Normal);
+            var text = CreateText("根据每一次启动与退出记录统计真实游玩时长，支持全部、今天、本周、本月、今年统计。", 14, FontWeights.Normal);
             text.Margin = new Thickness(0, 0, 0, 14);
             text.SetResourceReference(TextBlock.ForegroundProperty, "TextBrushDarker");
             return text;
@@ -526,7 +526,7 @@ namespace GameActivityReview
             border.Margin = new Thickness(0, 0, 0, fullscreenMode ? 20 : 0);
             border.Padding = new Thickness(16);
             var panel = new StackPanel();
-            panel.Children.Add(CreateText(fullscreenMode ? "回顾摘要" : "海报预览说明", 14, FontWeights.Normal));
+            panel.Children.Add(CreateText(fullscreenMode ? "时长摘要" : "海报预览说明", 14, FontWeights.Normal));
 
             var review = CreateText(string.Empty, 22, FontWeights.SemiBold);
             review.Margin = new Thickness(0, 12, 0, 0);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -35,7 +35,10 @@ namespace GameActivityReview.TestRunner
             RunTest(ChartSummaryIncludesDailyAverageAndGamePercent, ref passed, ref failed);
             RunTest(ChartUsesFixedBucketsForWeekMonthAndYear, ref passed, ref failed);
             RunTest(ChartColumnsUseUniformGridToFillWidth, ref passed, ref failed);
-            RunTest(MainMenuDoesNotExposeDialogEntry, ref passed, ref failed);
+            RunTest(DesktopMainMenuExposesReviewEntry, ref passed, ref failed);
+            RunTest(DesktopSidebarExposesDurationEntry, ref passed, ref failed);
+            RunTest(DesktopPluginDoesNotInitializeFullscreenState, ref passed, ref failed);
+            RunTest(FullscreenMainMenuDoesNotExposeDialogEntry, ref passed, ref failed);
             RunTest(PluginRegistersFullscreenHomeControl, ref passed, ref failed);
             RunTest(FullscreenHomeControlIsClickable, ref passed, ref failed);
             RunTest(FullscreenHomeEntryMatchesQuickPresetVisualStyle, ref passed, ref failed);
@@ -300,13 +303,58 @@ namespace GameActivityReview.TestRunner
             }
         }
 
-        // 验证全屏扩展菜单不再暴露弹窗入口。
-        private static void MainMenuDoesNotExposeDialogEntry()
+        // 验证桌面模式保留主菜单入口。
+        private static void DesktopMainMenuExposesReviewEntry()
         {
-            var plugin = (GameActivityReviewPlugin)FormatterServices.GetUninitializedObject(typeof(GameActivityReviewPlugin));
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests", Guid.NewGuid().ToString()), ApplicationMode.Desktop);
+            var plugin = new GameActivityReviewPlugin(api);
             var items = plugin.GetMainMenuItems(new GetMainMenuItemsArgs()).ToList();
 
-            AssertEqual(0, items.Count, "main menu item count");
+            AssertEqual(1, items.Count, "desktop main menu item count");
+            AssertEqual("时长", items[0].Description, "desktop main menu item title");
+            if (items[0].Action == null)
+            {
+                throw new InvalidOperationException("desktop main menu item should open the review view");
+            }
+        }
+
+        // 验证桌面模式保留侧边栏入口。
+        private static void DesktopSidebarExposesDurationEntry()
+        {
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests", Guid.NewGuid().ToString()), ApplicationMode.Desktop);
+            var plugin = new GameActivityReviewPlugin(api);
+            var items = plugin.GetSidebarItems().ToList();
+
+            AssertEqual(1, items.Count, "desktop sidebar item count");
+            AssertEqual("时长", items[0].Title, "desktop sidebar item title");
+        }
+
+        // 验证桌面模式不初始化全屏状态，避免插件加载失败。
+        private static void DesktopPluginDoesNotInitializeFullscreenState()
+        {
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests", Guid.NewGuid().ToString()), ApplicationMode.Desktop);
+            var plugin = new GameActivityReviewPlugin(api);
+            var stateField = typeof(GameActivityReviewPlugin).GetField("fullscreenState", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (stateField == null)
+            {
+                throw new InvalidOperationException("fullscreen state field missing");
+            }
+
+            if (stateField.GetValue(plugin) != null)
+            {
+                throw new InvalidOperationException("desktop plugin should not initialize fullscreen state");
+            }
+        }
+
+        // 验证全屏扩展菜单不再暴露弹窗入口。
+        private static void FullscreenMainMenuDoesNotExposeDialogEntry()
+        {
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests", Guid.NewGuid().ToString()), ApplicationMode.Fullscreen);
+            var plugin = new GameActivityReviewPlugin(api);
+            var items = plugin.GetMainMenuItems(new GetMainMenuItemsArgs()).ToList();
+
+            AssertEqual(0, items.Count, "fullscreen main menu item count");
         }
 
         // 验证插件注册并提供全屏首页内嵌控件。
@@ -696,7 +744,7 @@ namespace GameActivityReview.TestRunner
             public IGameDatabaseAPI Database { get { return null; } }
             public IDialogsFactory Dialogs { get { return null; } }
             public INotificationsAPI Notifications { get { return null; } }
-            public IPlayniteInfoAPI ApplicationInfo { get { return null; } }
+            public IPlayniteInfoAPI ApplicationInfo { get; private set; }
             public IWebViewFactory WebViews { get { return null; } }
             public IResourceProvider Resources { get { return null; } }
             public IUriHandlerAPI UriHandler { get { return null; } }
@@ -705,8 +753,14 @@ namespace GameActivityReview.TestRunner
             public IEmulationAPI Emulation { get { return null; } }
 
             public FakePlayniteApi(string extensionsDataPath)
+                : this(extensionsDataPath, ApplicationMode.Desktop)
+            {
+            }
+
+            public FakePlayniteApi(string extensionsDataPath, ApplicationMode mode)
             {
                 Paths = new FakePlaynitePaths(extensionsDataPath);
+                ApplicationInfo = new FakePlayniteInfo(mode);
             }
 
             public void AddCustomElementSupport(Plugin source, AddCustomElementSupportArgs args)
@@ -724,6 +778,21 @@ namespace GameActivityReview.TestRunner
             public void InstallGame(Guid gameId) { }
             public void UninstallGame(Guid gameId) { }
             public List<GamepadController> GetConnectedControllers() { return new List<GamepadController>(); }
+        }
+
+        private class FakePlayniteInfo : IPlayniteInfoAPI
+        {
+            public System.Version ApplicationVersion { get { return new System.Version(10, 0); } }
+            public ApplicationMode Mode { get; private set; }
+            public bool IsPortable { get { return true; } }
+            public bool InOfflineMode { get { return false; } }
+            public bool IsDebugBuild { get { return false; } }
+            public bool ThrowAllErrors { get { return false; } }
+
+            public FakePlayniteInfo(ApplicationMode mode)
+            {
+                Mode = mode;
+            }
         }
 
         private class FakePlaynitePaths : IPlaynitePathsAPI

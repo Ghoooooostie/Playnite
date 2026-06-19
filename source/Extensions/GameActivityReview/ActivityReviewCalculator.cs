@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -273,7 +273,7 @@ namespace GameActivityReview
         {
             if (summary.TotalSeconds == 0)
             {
-                return "这个范围内还没有游戏记录。开始游戏后，这里会自动生成回顾。";
+                return "这个范围内还没有游戏记录。开始游戏后，这里会自动生成时长统计。";
             }
 
             return string.Format("{0}共游玩 {1}，启动 {2} 次，最常玩的游戏是 {3}。", summary.PeriodTitle, summary.TotalTimeText, summary.SessionCount, summary.TopGameName);

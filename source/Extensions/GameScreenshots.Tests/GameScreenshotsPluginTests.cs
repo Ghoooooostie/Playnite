@@ -63,6 +63,18 @@ namespace GameScreenshots.Tests
         }
 
         [Test]
+        public void Plugin_adds_sidebar_gallery_entry()
+        {
+            var api = new FakePlayniteApi(Path.Combine(Path.GetTempPath(), "GameScreenshotsPluginTests", Guid.NewGuid().ToString()));
+            var plugin = new GameScreenshotsPlugin(api);
+
+            var items = plugin.GetSidebarItems().ToList();
+
+            Assert.AreEqual(1, items.Count);
+            Assert.AreEqual("画廊", items[0].Title);
+        }
+
+        [Test]
         public void Plugin_registers_fullscreen_home_screenshots_control()
         {
             var api = new FakePlayniteApi(Path.Combine(Path.GetTempPath(), "GameScreenshotsPluginTests", Guid.NewGuid().ToString()));

@@ -57,6 +57,14 @@ namespace GameScreenshots.Tests
         }
 
         [Test]
+        public void Gallery_view_title_is_gallery()
+        {
+            var viewModel = new GameScreenshotsViewModel(new FakeScreenshotStore(), null, null, null);
+
+            Assert.AreEqual("画廊", viewModel.Title);
+        }
+
+        [Test]
         public void Gallery_view_groups_screenshots_by_game_newest_group_first()
         {
             var store = new FakeScreenshotStore();

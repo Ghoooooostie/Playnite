@@ -1,4 +1,4 @@
-﻿using Playnite.SDK;
+using Playnite.SDK;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -97,7 +97,7 @@ namespace GameActivityReview
             }
             catch (Exception e)
             {
-                api.Dialogs.ShowErrorMessage(e.Message, "游戏时光回顾");
+                api.Dialogs.ShowErrorMessage(e.Message, "游戏时长");
                 throw;
             }
         }
@@ -131,7 +131,7 @@ namespace GameActivityReview
             }
 
             System.IO.File.WriteAllText(path, GameActivityShareText.Build(Summary), Encoding.UTF8);
-            api.Dialogs.ShowMessage("分享海报已保存。", "游戏时光回顾");
+            api.Dialogs.ShowMessage("分享海报已保存。", "游戏时长");
         }
 
         // 在 Playnite 中选中榜单游戏。

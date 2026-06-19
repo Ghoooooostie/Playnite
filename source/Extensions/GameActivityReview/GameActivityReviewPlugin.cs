@@ -1,4 +1,4 @@
-// 文件用途：Playnite 游戏回顾插件入口，负责记录游玩会话并提供桌面侧边栏和全屏首页控件。
+// 文件用途：Playnite 游戏时长插件入口，负责记录游玩会话并提供桌面侧边栏和全屏首页控件。
 using Playnite.SDK;
 using Playnite.SDK.Events;
 using Playnite.SDK.Plugins;
@@ -9,12 +9,12 @@ using System.Windows.Media;
 
 namespace GameActivityReview
 {
-    // Playnite 插件入口，负责监听游戏事件并提供回顾页面。
+    // Playnite 插件入口，负责监听游戏事件并提供时长页面。
     public class GameActivityReviewPlugin : GenericPlugin
     {
         private readonly Dictionary<Guid, RunningGameSession> runningSessions = new Dictionary<Guid, RunningGameSession>();
         private readonly GameActivityStore store;
-        private readonly GameActivityReviewFullscreenState fullscreenState = new GameActivityReviewFullscreenState();
+        private GameActivityReviewFullscreenState fullscreenState;
 
         public override Guid Id
         {
@@ -85,7 +85,11 @@ namespace GameActivityReview
         // Playnite 关闭时，把仍在运行的游戏按当前时间收口。
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
-            fullscreenState.Dispose();
+            if (fullscreenState != null)
+            {
+                fullscreenState.Dispose();
+            }
+
             foreach (var session in runningSessions.Values)
             {
                 var endedAt = DateTime.Now;
@@ -107,19 +111,42 @@ namespace GameActivityReview
             yield return new SidebarItem
             {
                 Type = SiderbarItemType.View,
-                Title = "游戏时光回顾",
+                Title = "时长",
                 Icon = CreateSidebarIcon(),
                 Opened = () => CreateReviewView()
             };
         }
 
-        // 全屏模式不注册弹窗菜单，避免手柄场景下关闭路径不直观。
+        // 桌面模式保留入口，全屏模式改用顶部栏目避免弹窗。
         public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
         {
-            yield break;
+            if (PlayniteApi.ApplicationInfo != null && PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Fullscreen)
+            {
+                yield break;
+            }
+
+            yield return new MainMenuItem
+            {
+                Description = "时长",
+                MenuSection = "@",
+                Action = delegate { OpenDesktopReviewWindow(); }
+            };
         }
 
-        // 创建回顾页面。
+        // 打开桌面时长窗口。
+        private void OpenDesktopReviewWindow()
+        {
+            var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions());
+            window.Title = "时长";
+            window.Content = CreateReviewView();
+            window.Owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
+            window.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner;
+            window.Width = 1180;
+            window.Height = 760;
+            window.ShowDialog();
+        }
+
+        // 创建时长页面。
         private GameActivityReviewView CreateReviewView()
         {
             return new GameActivityReviewView(new GameActivityReviewViewModel(PlayniteApi, store));
@@ -135,26 +162,43 @@ namespace GameActivityReview
 
             if (args.Name == "FullscreenHomeReview")
             {
-                return new GameActivityReviewHomeView(new GameActivityReviewViewModel(PlayniteApi, store), fullscreenState);
+                return new GameActivityReviewHomeView(new GameActivityReviewViewModel(PlayniteApi, store), GetFullscreenState());
             }
 
             if (args.Name == "FullscreenReviewPanel")
             {
-                return new GameActivityReviewFullscreenPanelView(new GameActivityReviewViewModel(PlayniteApi, store), fullscreenState);
+                return new GameActivityReviewFullscreenPanelView(new GameActivityReviewViewModel(PlayniteApi, store), GetFullscreenState());
             }
 
             return null;
         }
 
+        // 获取全屏共享状态。
+        private GameActivityReviewFullscreenState GetFullscreenState()
+        {
+            if (fullscreenState == null)
+            {
+                fullscreenState = new GameActivityReviewFullscreenState();
+            }
+
+            return fullscreenState;
+        }
+
         // 创建侧边栏图标。
         private static TextBlock CreateSidebarIcon()
         {
-            return new TextBlock
+            var icon = new TextBlock
             {
                 Text = char.ConvertFromUtf32(0xe983),
-                FontSize = 20,
-                FontFamily = ResourceProvider.GetResource("FontIcoFont") as FontFamily
+                FontSize = 20
             };
+            var font = ResourceProvider.GetResource("FontIcoFont") as FontFamily;
+            if (font != null)
+            {
+                icon.FontFamily = font;
+            }
+
+            return icon;
         }
 
         private class RunningGameSession
@@ -165,4 +209,3 @@ namespace GameActivityReview
         }
     }
 }
-

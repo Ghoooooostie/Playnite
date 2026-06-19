@@ -174,7 +174,7 @@ namespace GameScreenshots
             yield return new SidebarItem
             {
                 Type = SiderbarItemType.View,
-                Title = "截图画廊",
+                Title = "画廊",
                 Icon = CreateSidebarIcon(),
                 Opened = delegate
                 {
@@ -246,12 +246,18 @@ namespace GameScreenshots
         // 创建侧边栏图标。
         private static TextBlock CreateSidebarIcon()
         {
-            return new TextBlock
+            var icon = new TextBlock
             {
                 Text = char.ConvertFromUtf32(0xeb0d),
-                FontSize = 20,
-                FontFamily = ResourceProvider.GetResource("FontIcoFont") as FontFamily
+                FontSize = 20
             };
+            var font = ResourceProvider.GetResource("FontIcoFont") as FontFamily;
+            if (font != null)
+            {
+                icon.FontFamily = font;
+            }
+
+            return icon;
         }
     }
 }

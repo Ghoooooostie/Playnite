@@ -81,7 +81,7 @@ namespace GameScreenshots
             ToggleManagementCommand = new RelayCommand(ToggleManagement);
             ToggleSelectionCommand = new RelayCommand<ScreenshotItem>(ToggleSelection);
             DeleteSelectedCommand = new RelayCommand(DeleteSelected, HasSelection);
-            Title = game == null ? "截图画廊" : "截图 - " + game.Name;
+            Title = game == null ? "画廊" : "截图 - " + game.Name;
             if (screenshotService != null)
             {
                 screenshotService.ScreenshotCaptured += ScreenshotService_ScreenshotCaptured;
