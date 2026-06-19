@@ -1,3 +1,4 @@
+// 文件用途：Playnite 游戏回顾插件入口，负责记录游玩会话并提供桌面侧边栏和全屏首页控件。
 using Playnite.SDK;
 using Playnite.SDK.Events;
 using Playnite.SDK.Plugins;
@@ -8,11 +9,12 @@ using System.Windows.Media;
 
 namespace GameActivityReview
 {
-    // Playnite 插件入口，负责监听游戏事件并提供侧边栏页面。
+    // Playnite 插件入口，负责监听游戏事件并提供回顾页面。
     public class GameActivityReviewPlugin : GenericPlugin
     {
         private readonly Dictionary<Guid, RunningGameSession> runningSessions = new Dictionary<Guid, RunningGameSession>();
         private readonly GameActivityStore store;
+        private readonly GameActivityReviewFullscreenState fullscreenState = new GameActivityReviewFullscreenState();
 
         public override Guid Id
         {
@@ -26,6 +28,11 @@ namespace GameActivityReview
                 HasSettings = false
             };
             store = new GameActivityStore(GetPluginUserDataPath());
+            AddCustomElementSupport(new AddCustomElementSupportArgs
+            {
+                SourceName = "GameActivityReview",
+                ElementList = new List<string> { "FullscreenHomeReview", "FullscreenReviewPanel" }
+            });
         }
 
         // 游戏开始后记录开始时间。
@@ -78,6 +85,7 @@ namespace GameActivityReview
         // Playnite 关闭时，把仍在运行的游戏按当前时间收口。
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
+            fullscreenState.Dispose();
             foreach (var session in runningSessions.Values)
             {
                 var endedAt = DateTime.Now;
@@ -93,7 +101,7 @@ namespace GameActivityReview
             runningSessions.Clear();
         }
 
-        // 注册侧边栏入口。
+        // 注册桌面侧边栏入口。
         public override IEnumerable<SidebarItem> GetSidebarItems()
         {
             yield return new SidebarItem
@@ -101,8 +109,41 @@ namespace GameActivityReview
                 Type = SiderbarItemType.View,
                 Title = "游戏时光回顾",
                 Icon = CreateSidebarIcon(),
-                Opened = () => new GameActivityReviewView(new GameActivityReviewViewModel(PlayniteApi, store))
+                Opened = () => CreateReviewView()
             };
+        }
+
+        // 全屏模式不注册弹窗菜单，避免手柄场景下关闭路径不直观。
+        public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
+        {
+            yield break;
+        }
+
+        // 创建回顾页面。
+        private GameActivityReviewView CreateReviewView()
+        {
+            return new GameActivityReviewView(new GameActivityReviewViewModel(PlayniteApi, store));
+        }
+
+        // 为全屏顶部栏目和主内容区提供控件。
+        public override Control GetGameViewControl(GetGameViewControlArgs args)
+        {
+            if (args == null || args.Mode != ApplicationMode.Fullscreen)
+            {
+                return null;
+            }
+
+            if (args.Name == "FullscreenHomeReview")
+            {
+                return new GameActivityReviewHomeView(new GameActivityReviewViewModel(PlayniteApi, store), fullscreenState);
+            }
+
+            if (args.Name == "FullscreenReviewPanel")
+            {
+                return new GameActivityReviewFullscreenPanelView(new GameActivityReviewViewModel(PlayniteApi, store), fullscreenState);
+            }
+
+            return null;
         }
 
         // 创建侧边栏图标。

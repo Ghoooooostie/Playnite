@@ -45,6 +45,11 @@
     <Compile Include="ActivityReviewPeriodOption.cs" />
     <Compile Include="ActivityReviewSummary.cs" />
     <Compile Include="GameActivityReviewPlugin.cs" />
+    <Compile Include="GameActivityReviewControllerInput.cs" />
+    <Compile Include="GameActivityReviewFullscreenPanelView.cs" />
+    <Compile Include="GameActivityReviewFullscreenState.cs" />
+    <Compile Include="GameActivityReviewHomeView.cs" />
+    <Compile Include="GameActivityReviewScrollViewer.cs" />
     <Compile Include="GameActivityReviewView.cs" />
     <Compile Include="GameActivityReviewViewModel.cs" />
     <Compile Include="GameActivityShareText.cs" />

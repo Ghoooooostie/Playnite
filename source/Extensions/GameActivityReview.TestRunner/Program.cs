@@ -6,6 +6,10 @@ using System.Runtime.Serialization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using Playnite.SDK;
+using Playnite.SDK.Plugins;
+using Playnite.SDK.Models;
+using Playnite.SDK.Events;
 
 namespace GameActivityReview.TestRunner
 {
@@ -23,6 +27,7 @@ namespace GameActivityReview.TestRunner
             RunTest(ToolbarButtonUsesFixedTextContent, ref passed, ref failed);
             RunTest(LayoutLeavesTitleBarSafeArea, ref passed, ref failed);
             RunTest(ContentHasListAndChartTabs, ref passed, ref failed);
+            RunTest(RankingUsesFullscreenBarsInsteadOfGridView, ref passed, ref failed);
             RunTest(DailyChartSplitsSessionAcrossDays, ref passed, ref failed);
             RunTest(DayPeriodCountsOnlyToday, ref passed, ref failed);
             RunTest(AllPeriodBuildsChartFromPlayedDays, ref passed, ref failed);
@@ -30,6 +35,18 @@ namespace GameActivityReview.TestRunner
             RunTest(ChartSummaryIncludesDailyAverageAndGamePercent, ref passed, ref failed);
             RunTest(ChartUsesFixedBucketsForWeekMonthAndYear, ref passed, ref failed);
             RunTest(ChartColumnsUseUniformGridToFillWidth, ref passed, ref failed);
+            RunTest(MainMenuDoesNotExposeDialogEntry, ref passed, ref failed);
+            RunTest(PluginRegistersFullscreenHomeControl, ref passed, ref failed);
+            RunTest(FullscreenHomeControlIsClickable, ref passed, ref failed);
+            RunTest(FullscreenHomeEntryMatchesQuickPresetVisualStyle, ref passed, ref failed);
+            RunTest(FullscreenReviewPanelUsesFocusableScrollViewer, ref passed, ref failed);
+            RunTest(FullscreenReviewUsesNativeContentFlowWithoutDesktopTabs, ref passed, ref failed);
+            RunTest(FullscreenScrollViewerReleasesBoundaryDirections, ref passed, ref failed);
+            RunTest(FullscreenPanelFocusSearchGuardsRecursiveTreeWalk, ref passed, ref failed);
+            RunTest(FullscreenStateTracksNativePresetChanges, ref passed, ref failed);
+            RunTest(FullscreenThemeExposesReviewPanelRegion, ref passed, ref failed);
+            RunTest(FullscreenReviewEntryIsNextToFilterPresetSelector, ref passed, ref failed);
+            RunTest(FullscreenPeriodPickerDoesNotUseOrangeFocusBorder, ref passed, ref failed);
 
             Console.WriteLine("Passed=" + passed + " Failed=" + failed);
             return failed == 0 ? 0 : 1;
@@ -282,6 +299,226 @@ namespace GameActivityReview.TestRunner
                 throw new InvalidOperationException("chart columns should use UniformGrid to fill the available width");
             }
         }
+
+        // 验证全屏扩展菜单不再暴露弹窗入口。
+        private static void MainMenuDoesNotExposeDialogEntry()
+        {
+            var plugin = (GameActivityReviewPlugin)FormatterServices.GetUninitializedObject(typeof(GameActivityReviewPlugin));
+            var items = plugin.GetMainMenuItems(new GetMainMenuItemsArgs()).ToList();
+
+            AssertEqual(0, items.Count, "main menu item count");
+        }
+
+        // 验证插件注册并提供全屏首页内嵌控件。
+        private static void PluginRegistersFullscreenHomeControl()
+        {
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests"));
+            var plugin = new GameActivityReviewPlugin(api);
+
+            AssertEqual("GameActivityReview", api.CustomElementSourceName, "custom element source name");
+            if (api.CustomElementNames == null || !api.CustomElementNames.Contains("FullscreenHomeReview"))
+            {
+                throw new InvalidOperationException("custom element names missing FullscreenHomeReview");
+            }
+
+            var control = plugin.GetGameViewControl(new GetGameViewControlArgs
+            {
+                Name = "FullscreenHomeReview",
+                Mode = ApplicationMode.Fullscreen
+            });
+
+            if (control == null || control.GetType().Name != "GameActivityReviewHomeView")
+            {
+                throw new InvalidOperationException("fullscreen home review control missing");
+            }
+
+            var panel = plugin.GetGameViewControl(new GetGameViewControlArgs
+            {
+                Name = "FullscreenReviewPanel",
+                Mode = ApplicationMode.Fullscreen
+            });
+
+            if (panel == null || panel.GetType().Name != "GameActivityReviewFullscreenPanelView")
+            {
+                throw new InvalidOperationException("fullscreen review panel control missing");
+            }
+        }
+
+        // 验证全屏顶部回顾入口本身可点击。
+        private static void FullscreenHomeControlIsClickable()
+        {
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests", Guid.NewGuid().ToString()));
+            var plugin = new GameActivityReviewPlugin(api);
+            var control = plugin.GetGameViewControl(new GetGameViewControlArgs
+            {
+                Name = "FullscreenHomeReview",
+                Mode = ApplicationMode.Fullscreen
+            });
+
+            var contentControl = control as ContentControl;
+            var toggle = contentControl == null ? null : contentControl.Content as ToggleButton;
+            if (toggle == null)
+            {
+                throw new InvalidOperationException("fullscreen home review entry should be a selectable top item");
+            }
+
+            if (toggle.Command == null)
+            {
+                throw new InvalidOperationException("fullscreen home review entry should expose an open command");
+            }
+        }
+
+        // 验证顶部入口视觉上接近 Recently Played，只保留栏目文字和选中圆点。
+        private static void FullscreenHomeEntryMatchesQuickPresetVisualStyle()
+        {
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests", Guid.NewGuid().ToString()));
+            var plugin = new GameActivityReviewPlugin(api);
+            var control = plugin.GetGameViewControl(new GetGameViewControlArgs
+            {
+                Name = "FullscreenHomeReview",
+                Mode = ApplicationMode.Fullscreen
+            });
+
+            var contentControl = control as ContentControl;
+            var toggle = contentControl == null ? null : contentControl.Content as ToggleButton;
+            if (toggle == null)
+            {
+                throw new InvalidOperationException("fullscreen home review entry should use a top selector toggle");
+            }
+
+            AssertEqual("Play Time", toggle.Content, "review entry title");
+            AssertEqual(new Thickness(0), toggle.BorderThickness, "review entry border thickness");
+            if (toggle.FocusVisualStyle != null)
+            {
+                throw new InvalidOperationException("fullscreen review entry should not show default focus rectangle");
+            }
+
+            if (toggle.Template == null)
+            {
+                throw new InvalidOperationException("fullscreen review entry should define the quick preset visual template");
+            }
+        }
+
+        // 验证回顾面板查找焦点目标时不会递归进逻辑树循环。
+        private static void FullscreenPanelFocusSearchGuardsRecursiveTreeWalk()
+        {
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\GameActivityReview\GameActivityReviewFullscreenPanelView.cs"));
+            var source = System.IO.File.ReadAllText(path);
+            AssertContains(source, "HashSet<DependencyObject>", "fullscreen panel recursive guard");
+            AssertContains(source, "visited.Add", "fullscreen panel visited tracking");
+            AssertContains(source, "GetVisualChildren", "fullscreen panel visual child guard");
+        }
+
+        // 验证回顾面板可通过键盘和手柄方向键滚动。
+        private static void FullscreenReviewPanelUsesFocusableScrollViewer()
+        {
+            var api = new FakePlayniteApi(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GameActivityReviewTests", Guid.NewGuid().ToString()));
+            var plugin = new GameActivityReviewPlugin(api);
+            var control = plugin.GetGameViewControl(new GetGameViewControlArgs
+            {
+                Name = "FullscreenReviewPanel",
+                Mode = ApplicationMode.Fullscreen
+            });
+
+            if (control == null)
+            {
+                throw new InvalidOperationException("fullscreen review panel missing");
+            }
+
+            var scroll = FindLogicalChild<ScrollViewer>(control);
+            if (scroll == null || !scroll.Focusable)
+            {
+                throw new InvalidOperationException("fullscreen review panel should contain a focusable scroll viewer");
+            }
+        }
+
+        // 验证全屏回顾页不用桌面 TabControl 流程。
+        private static void FullscreenReviewUsesNativeContentFlowWithoutDesktopTabs()
+        {
+            var view = new GameActivityReviewView(null, true);
+
+            if (FindLogicalChild<TabControl>(view) != null)
+            {
+                throw new InvalidOperationException("fullscreen review should not use desktop tabs");
+            }
+
+            if (FindLogicalChild<ItemsControl>(view) == null)
+            {
+                throw new InvalidOperationException("fullscreen review should keep native item lists");
+            }
+        }
+
+        // 验证滚动容器在边界处不吞掉方向键。
+        private static void FullscreenScrollViewerReleasesBoundaryDirections()
+        {
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\GameActivityReview\GameActivityReviewScrollViewer.cs"));
+            var source = System.IO.File.ReadAllText(path);
+            AssertContains(source, "CanScrollUp", "scroll viewer top boundary check");
+            AssertContains(source, "CanScrollDown", "scroll viewer bottom boundary check");
+            AssertContains(source, "MoveFocus", "scroll viewer boundary focus release");
+        }
+
+        // 验证原生筛选项变化时关闭回顾面板。
+        private static void FullscreenStateTracksNativePresetChanges()
+        {
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\GameActivityReview\GameActivityReviewFullscreenState.cs"));
+            var source = System.IO.File.ReadAllText(path);
+            AssertContains(source, "AttachToFullscreenMainModel", "fullscreen state native model hook");
+            AssertContains(source, "ActiveFilterPreset", "fullscreen state preset change listener");
+            AssertContains(source, "isOpeningPanel", "fullscreen state ignores its own reset");
+        }
+
+        // 验证默认全屏主题提供回顾主内容区插槽。
+        private static void FullscreenThemeExposesReviewPanelRegion()
+        {
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\..\Playnite.FullscreenApp\Themes\Fullscreen\Default\Views\Main.xaml"));
+            var xaml = System.IO.File.ReadAllText(path);
+            AssertContains(xaml, "GameActivityReview_FullscreenReviewPanel", "fullscreen review panel region");
+        }
+
+
+        // 验证回顾入口放在顶部栏目选择器后面同一行。
+        private static void FullscreenReviewEntryIsNextToFilterPresetSelector()
+        {
+            var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\..\Playnite.FullscreenApp\Themes\Fullscreen\Default\Views\Main.xaml"));
+            var xaml = System.IO.File.ReadAllText(path);
+            var selectorIndex = xaml.IndexOf("<FilterPresetSelector", StringComparison.Ordinal);
+            var entryIndex = xaml.IndexOf("GameActivityReview_FullscreenHomeReview", StringComparison.Ordinal);
+            var stackIndex = xaml.LastIndexOf("<StackPanel", entryIndex, StringComparison.Ordinal);
+            var stackCloseIndex = xaml.IndexOf("</StackPanel>", entryIndex, StringComparison.Ordinal);
+
+            if (selectorIndex < 0 || entryIndex < 0 || stackIndex < 0 || stackCloseIndex < 0)
+            {
+                throw new InvalidOperationException("fullscreen review entry should be declared next to FilterPresetSelector");
+            }
+
+            if (entryIndex <= selectorIndex || selectorIndex <= stackIndex || entryIndex >= stackCloseIndex)
+            {
+                throw new InvalidOperationException("fullscreen review entry should sit after Recently Played selector in the same top row");
+            }
+        }
+
+        // 验证全屏时间范围下拉框不用默认橙色聚焦框。
+        private static void FullscreenPeriodPickerDoesNotUseOrangeFocusBorder()
+        {
+            var source = System.IO.File.ReadAllText(System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\GameActivityReview\GameActivityReviewView.cs")));
+            AssertContains(source, "BuildFullscreenPeriodPickerStyle", "fullscreen period picker custom style");
+            AssertContains(source, "#88FFFFFF", "fullscreen period picker calm focus border");
+            AssertContains(source, "BuildFullscreenPeriodPickerTemplate", "fullscreen period picker internal border template");
+            AssertContains(source, "Margin=\\\"0\\\"", "fullscreen period picker should not use negative border margins");
+        }
         private static void ChartUsesFixedBucketsForWeekMonthAndYear()
         {
             var now = new DateTime(2026, 6, 17, 12, 0, 0, DateTimeKind.Local);
@@ -349,6 +586,33 @@ namespace GameActivityReview.TestRunner
             if (!panel.Children.OfType<Border>().Any())
             {
                 throw new InvalidOperationException("chart view should include an overview card");
+            }
+        }
+
+        // 验证全屏榜单不用桌面表格样式。
+        private static void RankingUsesFullscreenBarsInsteadOfGridView()
+        {
+            var view = (GameActivityReviewView)FormatterServices.GetUninitializedObject(typeof(GameActivityReviewView));
+            var method = typeof(GameActivityReviewView).GetMethod("BuildRanking", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (method == null)
+            {
+                throw new InvalidOperationException("BuildRanking method missing");
+            }
+
+            var ranking = method.Invoke(view, null) as StackPanel;
+            if (ranking == null)
+            {
+                throw new InvalidOperationException("ranking view should be a StackPanel");
+            }
+
+            if (FindLogicalChild<ListView>(ranking) != null || FindLogicalChild<GridViewColumnHeader>(ranking) != null)
+            {
+                throw new InvalidOperationException("fullscreen ranking should not use desktop table view");
+            }
+
+            if (FindLogicalChild<ItemsControl>(ranking) == null)
+            {
+                throw new InvalidOperationException("fullscreen ranking should use a simple items list");
             }
         }
 
@@ -423,6 +687,58 @@ namespace GameActivityReview.TestRunner
             }
         }
 
+        private class FakePlayniteApi : IPlayniteAPI
+        {
+            public string CustomElementSourceName { get; private set; }
+            public List<string> CustomElementNames { get; private set; }
+            public IPlaynitePathsAPI Paths { get; private set; }
+            public IMainViewAPI MainView { get { return null; } }
+            public IGameDatabaseAPI Database { get { return null; } }
+            public IDialogsFactory Dialogs { get { return null; } }
+            public INotificationsAPI Notifications { get { return null; } }
+            public IPlayniteInfoAPI ApplicationInfo { get { return null; } }
+            public IWebViewFactory WebViews { get { return null; } }
+            public IResourceProvider Resources { get { return null; } }
+            public IUriHandlerAPI UriHandler { get { return null; } }
+            public IPlayniteSettingsAPI ApplicationSettings { get { return null; } }
+            public IAddons Addons { get { return null; } }
+            public IEmulationAPI Emulation { get { return null; } }
+
+            public FakePlayniteApi(string extensionsDataPath)
+            {
+                Paths = new FakePlaynitePaths(extensionsDataPath);
+            }
+
+            public void AddCustomElementSupport(Plugin source, AddCustomElementSupportArgs args)
+            {
+                CustomElementSourceName = args.SourceName;
+                CustomElementNames = args.ElementList.ToList();
+            }
+
+            public void AddSettingsSupport(Plugin source, AddSettingsSupportArgs args) { }
+            public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args) { }
+            public string ExpandGameVariables(Playnite.SDK.Models.Game game, string inputString) { return inputString; }
+            public string ExpandGameVariables(Playnite.SDK.Models.Game game, string inputString, string emulatorDir) { return inputString; }
+            public Playnite.SDK.Models.GameAction ExpandGameVariables(Playnite.SDK.Models.Game game, Playnite.SDK.Models.GameAction action) { return action; }
+            public void StartGame(Guid gameId) { }
+            public void InstallGame(Guid gameId) { }
+            public void UninstallGame(Guid gameId) { }
+            public List<GamepadController> GetConnectedControllers() { return new List<GamepadController>(); }
+        }
+
+        private class FakePlaynitePaths : IPlaynitePathsAPI
+        {
+            public bool IsPortable { get { return true; } }
+            public string ApplicationPath { get { return string.Empty; } }
+            public string ConfigurationPath { get { return string.Empty; } }
+            public string ExtensionsDataPath { get; private set; }
+
+            public FakePlaynitePaths(string extensionsDataPath)
+            {
+                ExtensionsDataPath = extensionsDataPath;
+            }
+        }
+
         private static void AssertEqual<T>(T expected, T actual, string label)
         {
             if (!object.Equals(expected, actual))
@@ -438,5 +754,35 @@ namespace GameActivityReview.TestRunner
                 throw new InvalidOperationException(label + " missing " + expected);
             }
         }
+
+        private static T FindLogicalChild<T>(DependencyObject root) where T : DependencyObject
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+            {
+                if (child is T match)
+                {
+                    return match;
+                }
+
+                var nested = FindLogicalChild<T>(child);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+
+            return null;
+        }
     }
 }
+
+
+
+
+
+

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
 
 namespace GameActivityReview
@@ -10,8 +11,23 @@ namespace GameActivityReview
     // 游戏时光回顾侧边栏页面。
     public class GameActivityReviewView : UserControl
     {
+        private readonly bool fullscreenMode;
+        private readonly ICommand closeCommand;
+
         public GameActivityReviewView(GameActivityReviewViewModel viewModel)
+            : this(viewModel, false, null)
         {
+        }
+
+        public GameActivityReviewView(GameActivityReviewViewModel viewModel, bool fullscreenMode)
+            : this(viewModel, fullscreenMode, null)
+        {
+        }
+
+        public GameActivityReviewView(GameActivityReviewViewModel viewModel, bool fullscreenMode, ICommand closeCommand)
+        {
+            this.fullscreenMode = fullscreenMode;
+            this.closeCommand = closeCommand;
             DataContext = viewModel;
             Content = BuildLayout();
         }
@@ -19,17 +35,23 @@ namespace GameActivityReview
         // 创建页面主体布局。
         private UIElement BuildLayout()
         {
-            var root = new DockPanel { Margin = new Thickness(18, 58, 18, 18) };
+            var root = new DockPanel
+            {
+                Margin = fullscreenMode ? new Thickness(80, 28, 80, 28) : new Thickness(18, 58, 18, 18)
+            };
 
             var toolbar = BuildToolbar();
             DockPanel.SetDock(toolbar, Dock.Top);
             root.Children.Add(toolbar);
 
-            var scroll = new ScrollViewer
+            var scroll = fullscreenMode ? (ScrollViewer)new GameActivityReviewScrollViewer { CloseCommand = closeCommand } : new ScrollViewer();
+            scroll.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+            scroll.Content = BuildContent();
+            if (fullscreenMode)
             {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Content = BuildContent()
-            };
+                scroll.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+            }
+
             root.Children.Add(scroll);
             return root;
         }
@@ -57,11 +79,27 @@ namespace GameActivityReview
         // 创建内容区。
         private UIElement BuildContent()
         {
-            var panel = new StackPanel();
-            panel.Children.Add(BuildIntro());
+            var panel = new StackPanel
+            {
+                Margin = fullscreenMode ? new Thickness(0, 0, 0, 80) : new Thickness(0)
+            };
+            if (!fullscreenMode)
+            {
+                panel.Children.Add(BuildIntro());
+            }
+
             panel.Children.Add(BuildPeriodPicker());
             panel.Children.Add(BuildStatsGrid());
-            panel.Children.Add(BuildDisplayTabs());
+            if (fullscreenMode)
+            {
+                panel.Children.Add(BuildDailyChart());
+                panel.Children.Add(BuildRanking());
+            }
+            else
+            {
+                panel.Children.Add(BuildDisplayTabs());
+            }
+
             panel.Children.Add(BuildReviewPreview());
             return panel;
         }
@@ -80,23 +118,71 @@ namespace GameActivityReview
         {
             var combo = new ComboBox
             {
-                Width = 180,
+                Width = fullscreenMode ? 220 : 180,
                 DisplayMemberPath = "Label",
                 SelectedValuePath = "Period",
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(0, 0, 0, 14)
             };
+            if (fullscreenMode)
+            {
+                BuildFullscreenPeriodPickerStyle(combo);
+            }
+
             combo.SetBinding(ItemsControl.ItemsSourceProperty, new Binding("PeriodOptions"));
             combo.SetBinding(Selector.SelectedValueProperty, new Binding("SelectedPeriod") { Mode = BindingMode.TwoWay });
             return combo;
         }
 
+        // 给全屏时间下拉框使用更克制的聚焦边框色。
+        private static void BuildFullscreenPeriodPickerStyle(ComboBox combo)
+        {
+            if (combo == null)
+            {
+                return;
+            }
+
+            combo.Resources["SelectionBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#88FFFFFF"));
+            combo.Resources["SelectionLightBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#44FFFFFF"));
+            combo.Template = BuildFullscreenPeriodPickerTemplate();
+        }
+
+        // 创建全屏时间下拉框模板，边框在控件内部均匀显示。
+        private static ControlTemplate BuildFullscreenPeriodPickerTemplate()
+        {
+            const string xaml =
+                "<ControlTemplate xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" " +
+                "xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" TargetType=\"ComboBox\">" +
+                "<Grid Background=\"{TemplateBinding Background}\">" +
+                "<Border x:Name=\"PickerBorder\" Margin=\"0\" BorderBrush=\"{DynamicResource SelectionLightBrush}\" BorderThickness=\"2\" Background=\"Transparent\">" +
+                "<Grid>" +
+                "<TextBlock Style=\"{DynamicResource TextBlockBaseStyle}\" IsHitTestVisible=\"False\" HorizontalAlignment=\"{TemplateBinding HorizontalContentAlignment}\" VerticalAlignment=\"{TemplateBinding VerticalContentAlignment}\" Margin=\"{TemplateBinding Padding}\">" +
+                "<ContentPresenter IsHitTestVisible=\"False\" Content=\"{TemplateBinding SelectionBoxItem}\" ContentTemplate=\"{TemplateBinding SelectionBoxItemTemplate}\" ContentTemplateSelector=\"{TemplateBinding ItemTemplateSelector}\"/>" +
+                "</TextBlock>" +
+                "<ToggleButton Focusable=\"False\" ClickMode=\"Press\" Background=\"Transparent\" BorderThickness=\"0\" HorizontalAlignment=\"Stretch\" IsChecked=\"{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}\">" +
+                "<ToggleButton.Template><ControlTemplate TargetType=\"ToggleButton\"><Grid Background=\"Transparent\"><TextBlock Text=\"&#xeab2;\" FontFamily=\"{StaticResource FontIcoFont}\" Foreground=\"{DynamicResource TextBrush}\" FontSize=\"22\" HorizontalAlignment=\"Right\" VerticalAlignment=\"Center\" Margin=\"0,0,16,0\"/></Grid></ControlTemplate></ToggleButton.Template>" +
+                "</ToggleButton>" +
+                "</Grid>" +
+                "</Border>" +
+                "<Popup x:Name=\"Popup\" IsOpen=\"{TemplateBinding IsDropDownOpen}\" Placement=\"Bottom\" Focusable=\"False\" AllowsTransparency=\"True\">" +
+                "<Grid MaxHeight=\"{TemplateBinding MaxDropDownHeight}\" MinWidth=\"{TemplateBinding ActualWidth}\" SnapsToDevicePixels=\"{TemplateBinding SnapsToDevicePixels}\">" +
+                "<Border BorderBrush=\"{DynamicResource SelectionLightBrush}\" Background=\"{DynamicResource ControlBackgroundDarkBrush}\" BorderThickness=\"2\"><ScrollViewer HorizontalScrollBarVisibility=\"Disabled\" VerticalScrollBarVisibility=\"Auto\"><StackPanel IsItemsHost=\"True\" KeyboardNavigation.DirectionalNavigation=\"Contained\"/></ScrollViewer></Border>" +
+                "</Grid></Popup>" +
+                "</Grid>" +
+                "<ControlTemplate.Triggers>" +
+                "<Trigger Property=\"IsEnabled\" Value=\"False\"><Setter Property=\"Opacity\" Value=\"0.5\"/></Trigger>" +
+                "<Trigger Property=\"IsFocused\" Value=\"True\"><Setter Property=\"BorderBrush\" Value=\"{DynamicResource SelectionBrush}\" TargetName=\"PickerBorder\"/><Setter Property=\"Background\" Value=\"{DynamicResource ControlBackgroundDarkBrush}\" TargetName=\"PickerBorder\"/></Trigger>" +
+                "<Trigger Property=\"IsMouseOver\" Value=\"True\"><Setter Property=\"BorderBrush\" Value=\"{DynamicResource SelectionBrush}\" TargetName=\"PickerBorder\"/><Setter Property=\"Background\" Value=\"{DynamicResource ControlBackgroundDarkBrush}\" TargetName=\"PickerBorder\"/></Trigger>" +
+                "</ControlTemplate.Triggers>" +
+                "</ControlTemplate>";
+            return (ControlTemplate)XamlReader.Parse(xaml);
+        }
         // 创建统计卡片网格。
         private UIElement BuildStatsGrid()
         {
             var grid = new UniformGrid
             {
-                Columns = 4,
+                Columns = fullscreenMode ? 2 : 4,
                 Margin = new Thickness(0, 0, 0, 18)
             };
             grid.Children.Add(CreateStatBox("累计投入", "Summary.TotalTimeText", "当前范围"));
@@ -117,7 +203,7 @@ namespace GameActivityReview
         // 创建榜单区域。
         private UIElement BuildRanking()
         {
-            var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 18) };
+            var panel = new StackPanel { Margin = fullscreenMode ? new Thickness(0, 8, 0, 22) : new Thickness(0, 0, 0, 18) };
             panel.Children.Add(CreateText("游戏榜单", 22, FontWeights.SemiBold));
 
             var scope = CreateText(string.Empty, 13, FontWeights.Normal);
@@ -126,36 +212,27 @@ namespace GameActivityReview
             scope.SetBinding(TextBlock.TextProperty, new Binding("Summary.DateRangeText") { StringFormat = "{0}" });
             panel.Children.Add(scope);
 
-            var list = new ListView
-            {
-                MinHeight = 260,
-                MaxHeight = 460
-            };
-            list.SetResourceReference(Control.BorderBrushProperty, "NormalBorderBrush");
-            list.SetBinding(ItemsControl.ItemsSourceProperty, new Binding("TopGames"));
-            list.MouseDoubleClick += delegate
-            {
-                if (list.SelectedItem != null)
-                {
-                    ((GameActivityReviewViewModel)DataContext).OpenGameCommand.Execute(list.SelectedItem);
-                }
-            };
+            var border = CreatePanelBorder();
+            border.Padding = new Thickness(16);
 
-            var gridView = new GridView();
-            gridView.Columns.Add(new GridViewColumn { Header = "游戏", DisplayMemberBinding = new Binding("GameName"), Width = 360 });
-            gridView.Columns.Add(new GridViewColumn { Header = "时长", DisplayMemberBinding = new Binding("TimeText"), Width = 160 });
-            gridView.Columns.Add(new GridViewColumn { Header = "次数", DisplayMemberBinding = new Binding("SessionCount"), Width = 80 });
-            list.View = gridView;
-            panel.Children.Add(list);
+            var list = new ItemsControl();
+            list.SetBinding(ItemsControl.ItemsSourceProperty, new Binding("TopGames"));
+            list.ItemTemplate = BuildTopGameBarTemplate();
+            border.Child = list;
+            panel.Children.Add(border);
             return panel;
         }
 
         // 创建每日游玩时长图表。
         private UIElement BuildDailyChart()
         {
-            var panel = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
+            var panel = new StackPanel { Margin = fullscreenMode ? new Thickness(0, 4, 0, 22) : new Thickness(0, 10, 0, 0) };
             panel.Children.Add(BuildChartOverviewCard());
-            panel.Children.Add(BuildTopGameBars());
+            if (!fullscreenMode)
+            {
+                panel.Children.Add(BuildTopGameBars());
+            }
+
             return panel;
         }
 
@@ -446,9 +523,10 @@ namespace GameActivityReview
         private UIElement BuildReviewPreview()
         {
             var border = CreatePanelBorder();
+            border.Margin = new Thickness(0, 0, 0, fullscreenMode ? 20 : 0);
             border.Padding = new Thickness(16);
             var panel = new StackPanel();
-            panel.Children.Add(CreateText("海报预览说明", 14, FontWeights.Normal));
+            panel.Children.Add(CreateText(fullscreenMode ? "回顾摘要" : "海报预览说明", 14, FontWeights.Normal));
 
             var review = CreateText(string.Empty, 22, FontWeights.SemiBold);
             review.Margin = new Thickness(0, 12, 0, 0);
@@ -463,7 +541,7 @@ namespace GameActivityReview
         private UIElement CreateStatBox(string label, string valuePath, string description)
         {
             var border = CreatePanelBorder();
-            border.Margin = new Thickness(0, 0, 10, 0);
+            border.Margin = fullscreenMode ? new Thickness(0, 0, 14, 14) : new Thickness(0, 0, 10, 0);
             border.Padding = new Thickness(14);
             var panel = new StackPanel();
             var labelBlock = CreateText(label, 13, FontWeights.Normal);
@@ -537,3 +615,5 @@ namespace GameActivityReview
         }
     }
 }
+
+
