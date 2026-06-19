@@ -12,6 +12,7 @@ namespace LocalExecutableMetadata.Tests
     {
         private const string SampleExePath = @"H:\game\房产达人2\House Flipper 2\HouseFlipper2.exe";
         private const string FeedTheCupsExePath = @"H:\game\Feed.the.Cups.Build.20057193\Feed the Cups.exe";
+        private const string DaveTheDiverExePath = @"H:\game\Dave the Diver\DaveTheDiver.exe";
 
         [Test]
         public void TryRead_reads_unity_app_info_and_steam_app_id_from_sample_game()
@@ -52,6 +53,18 @@ namespace LocalExecutableMetadata.Tests
             Assert.That(result.SteamAppId, Is.EqualTo("2336220"));
             Assert.That(result.CoverImagePath, Is.EqualTo("https://cdn.cloudflare.steamstatic.com/steam/apps/2336220/library_600x900.jpg"));
             Assert.That(result.ToCoverImageFile().Path, Is.EqualTo(result.CoverImagePath));
+        }
+
+        [Test]
+        public void TryRead_reads_tenoke_id_as_steam_app_id()
+        {
+            Assert.That(File.Exists(DaveTheDiverExePath), Is.True, "Dave the Diver 示例 exe 文件不存在。请确认 H: 盘已挂载。");
+
+            var result = LocalExecutableMetadataReader.TryRead(DaveTheDiverExePath);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.SteamAppId, Is.EqualTo("1868140"));
+            Assert.That(result.CoverImagePath, Is.EqualTo("https://cdn.cloudflare.steamstatic.com/steam/apps/1868140/library_600x900.jpg"));
         }
 
         [Test]

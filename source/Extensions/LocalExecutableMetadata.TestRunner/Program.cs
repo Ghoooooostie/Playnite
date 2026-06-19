@@ -14,6 +14,7 @@ namespace LocalExecutableMetadata.TestRunner
     {
         private const string SampleExePath = @"H:\game\房产达人2\House Flipper 2\HouseFlipper2.exe";
         private const string FeedTheCupsExePath = @"H:\game\Feed.the.Cups.Build.20057193\Feed the Cups.exe";
+        private const string DaveTheDiverExePath = @"H:\game\Dave the Diver\DaveTheDiver.exe";
 
         private static int Main()
         {
@@ -22,6 +23,7 @@ namespace LocalExecutableMetadata.TestRunner
                 TryReadReadsSampleGame,
                 TryReadExtractsIcon,
                 TryReadReturnsSteamCoverWhenLocalCoverIsMissing,
+                TryReadReadsTenokeIdAsSteamAppId,
                 ResolveFindsExecutableFromAction,
                 ResolveDoesNotGuessWhenInstallDirectoryHasMultipleExecutables
             };
@@ -81,6 +83,18 @@ namespace LocalExecutableMetadata.TestRunner
             Assert(result.SteamAppId == "2336220", "Steam AppId 错误：" + result.SteamAppId);
             Assert(result.CoverImagePath == "https://cdn.cloudflare.steamstatic.com/steam/apps/2336220/library_600x900.jpg", "封面地址错误：" + result.CoverImagePath);
             Assert(result.ToCoverImageFile().Path == result.CoverImagePath, "封面元数据路径错误。");
+        }
+
+        // 验证 TENOKE 配置里的 id 字段能作为 Steam AppId。
+        private static void TryReadReadsTenokeIdAsSteamAppId()
+        {
+            Assert(File.Exists(DaveTheDiverExePath), "Dave the Diver 示例 exe 文件不存在。请确认 H: 盘已挂载。");
+
+            var result = LocalExecutableMetadataReader.TryRead(DaveTheDiverExePath);
+
+            Assert(result != null, "结果为空。");
+            Assert(result.SteamAppId == "1868140", "Steam AppId 错误：" + result.SteamAppId);
+            Assert(result.CoverImagePath == "https://cdn.cloudflare.steamstatic.com/steam/apps/1868140/library_600x900.jpg", "封面地址错误：" + result.CoverImagePath);
         }
 
         // 验证 Playnite 启动动作路径可以解析。

@@ -88,18 +88,13 @@ namespace LocalExecutableMetadata
 
             foreach (var iniPath in Directory.GetFiles(installDirectory, "*.ini", SearchOption.AllDirectories))
             {
+                var section = string.Empty;
                 foreach (var line in File.ReadLines(iniPath))
                 {
-                    var trimmed = line.Trim();
-                    if (!trimmed.StartsWith("AppId=", StringComparison.OrdinalIgnoreCase))
+                    var appId = ReadAppIdFromIniLine(line, ref section);
+                    if (IsNumeric(appId))
                     {
-                        continue;
-                    }
-
-                    var value = trimmed.Substring("AppId=".Length).Trim();
-                    if (IsNumeric(value))
-                    {
-                        return value;
+                        return appId;
                     }
                 }
             }
@@ -203,6 +198,59 @@ namespace LocalExecutableMetadata
         private static bool IsNumeric(string value)
         {
             return !string.IsNullOrWhiteSpace(value) && value.All(char.IsDigit);
+        }
+
+        // 解析常见 Steam 模拟器 ini 里的 AppId。
+        private static string ReadAppIdFromIniLine(string line, ref string section)
+        {
+            var trimmed = line?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                return null;
+            }
+
+            if (trimmed.StartsWith("[", StringComparison.Ordinal) && trimmed.EndsWith("]", StringComparison.Ordinal))
+            {
+                section = trimmed.Substring(1, trimmed.Length - 2).Trim();
+                return null;
+            }
+
+            var index = trimmed.IndexOf('=');
+            if (index < 0)
+            {
+                return null;
+            }
+
+            var key = trimmed.Substring(0, index).Trim();
+            var value = RemoveInlineComment(trimmed.Substring(index + 1)).Trim();
+            if (IsNumeric(value) && IsSteamAppIdKey(section, key))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        // TENOKE 使用 [TENOKE] id = 123；其它配置通常使用 AppId。
+        private static bool IsSteamAppIdKey(string section, string key)
+        {
+            return string.Equals(key, "AppId", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "SteamAppId", StringComparison.OrdinalIgnoreCase)
+                || (string.Equals(section, "TENOKE", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(key, "id", StringComparison.OrdinalIgnoreCase));
+        }
+
+        // 去掉 ini 行尾注释，保留注释前的数字值。
+        private static string RemoveInlineComment(string value)
+        {
+            var commentIndex = value.IndexOf('#');
+            var semicolonIndex = value.IndexOf(';');
+            if (commentIndex < 0 || semicolonIndex >= 0 && semicolonIndex < commentIndex)
+            {
+                commentIndex = semicolonIndex;
+            }
+
+            return commentIndex < 0 ? value : value.Substring(0, commentIndex);
         }
 
         private sealed class UnityAppInfo
