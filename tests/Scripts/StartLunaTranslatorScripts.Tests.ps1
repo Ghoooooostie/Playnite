@@ -45,10 +45,17 @@ Assert-True -Condition ($doc.Contains($playnitePreStartCommand)) -Message "Playn
 Assert-True -Condition ($doc.Contains($playniteGameStartedCommand)) -Message "Playnite game-started script docs should use the short direct call."
 Assert-True -Condition ($doc.Contains($playniteGameStoppedCommand)) -Message "Playnite game-stopped script docs should use the short direct call."
 Assert-True -Condition ($doc -notmatch 'powershell\s+-File\s+"D:\\My_Project\\Playnite\\scripts\\Bind-LunaTranslatorWindow\.ps1"') -Message "Playnite script docs should not start a separate PowerShell for game-started binding."
+$parseErrors = $null
+$null = [System.Management.Automation.PSParser]::Tokenize($playnitePreStartCommand, [ref]$parseErrors)
+Assert-True -Condition ($parseErrors.Count -eq 0) -Message "Playnite pre-start script command should parse."
 
-$null = [System.Management.Automation.PSParser]::Tokenize($playnitePreStartCommand, [ref]$null)
-$null = [System.Management.Automation.PSParser]::Tokenize($playniteGameStartedCommand, [ref]$null)
-$null = [System.Management.Automation.PSParser]::Tokenize($playniteGameStoppedCommand, [ref]$null)
+$parseErrors = $null
+$null = [System.Management.Automation.PSParser]::Tokenize($playniteGameStartedCommand, [ref]$parseErrors)
+Assert-True -Condition ($parseErrors.Count -eq 0) -Message "Playnite game-started script command should parse."
+
+$parseErrors = $null
+$null = [System.Management.Automation.PSParser]::Tokenize($playniteGameStoppedCommand, [ref]$parseErrors)
+Assert-True -Condition ($parseErrors.Count -eq 0) -Message "Playnite game-stopped script command should parse."
 
 $missingProcessOutput = & $bindScriptPath -PlatformNames @("Nintendo Switch") -StartedProcessId 0 -WindowWaitSeconds 1
 Assert-True -Condition ($null -eq $missingProcessOutput) -Message "Bind script should silently skip when Playnite does not provide StartedProcessId."
