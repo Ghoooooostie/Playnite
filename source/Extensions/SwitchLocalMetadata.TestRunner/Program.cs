@@ -11,6 +11,7 @@ namespace SwitchLocalMetadata.TestRunner
     internal static class Program
     {
         private const string SamplePath = @"H:\乙女\猛獣たちとお姫様 for Nintendo Switch\猛獣たちとお姫様 for Nintendo Switch [010035001D1B2000].xci";
+        private const string SampleNspPath = @"H:\乙女\BROTHERS CONFLICT Precious Baby for Nintendo Switch\BROTHERS CONFLICT Precious Baby for Nintendo Switch [JPN][010037400DAAE000].nsp";
 
         private static int Main()
         {
@@ -73,7 +74,43 @@ namespace SwitchLocalMetadata.TestRunner
                 return 1;
             }
 
+            var nspResult = RunNspReaderTest(settings);
+            if (nspResult != 0)
+            {
+                return nspResult;
+            }
+
             Console.WriteLine("PASS: " + result.TitleId + " " + result.DisplayName + " " + result.Publisher + " " + result.ImageFileName + " " + result.ImageBytes.Length);
+            return 0;
+        }
+
+        private static int RunNspReaderTest(SwitchLocalMetadataSettings settings)
+        {
+            if (!File.Exists(SampleNspPath))
+            {
+                Console.Error.WriteLine("FAIL: sample NSP file missing");
+                return 1;
+            }
+
+            var result = SwitchLocalRomReader.TryRead(SampleNspPath, settings);
+            if (result == null)
+            {
+                Console.Error.WriteLine("FAIL: NSP result is null");
+                return 1;
+            }
+
+            if (result.TitleId != "010037400DAAE000")
+            {
+                Console.Error.WriteLine("FAIL: wrong NSP title id " + result.TitleId);
+                return 1;
+            }
+
+            if (result.ImageBytes == null || result.ImageBytes.Length <= 1024)
+            {
+                Console.Error.WriteLine("FAIL: NSP image missing");
+                return 1;
+            }
+
             return 0;
         }
 

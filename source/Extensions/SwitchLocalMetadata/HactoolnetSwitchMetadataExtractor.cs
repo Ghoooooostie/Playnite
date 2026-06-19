@@ -14,6 +14,7 @@ namespace SwitchLocalMetadata
     {
         private const long MaxControlNcaSize = 64 * 1024 * 1024;
         private static readonly Regex XciNcaRegex = new Regex(@"secure:/([^\s]+\.nca)\s+([0-9A-Fa-f]+)-([0-9A-Fa-f]+)", RegexOptions.Compiled);
+        private static readonly Regex NspNcaRegex = new Regex(@"pfs0:/([^\s]+?\.nca)([0-9A-Fa-f]+)-([0-9A-Fa-f]+)", RegexOptions.Compiled);
         private static readonly Regex RootSecureRegex = new Regex(@"root:/secure\s+([0-9A-Fa-f]+)-([0-9A-Fa-f]+)", RegexOptions.Compiled);
         private readonly SwitchLocalMetadataSettings settings;
 
@@ -87,12 +88,14 @@ namespace SwitchLocalMetadata
 
         private string ExtractSmallNspNcas(string path, string workDir)
         {
+            var output = RunHactoolnet("-t pfs0 " + Quote(path));
             var contentDir = Path.Combine(workDir, "content");
             Directory.CreateDirectory(contentDir);
-            RunHactoolnet("-t pfs0 --outdir " + Quote(contentDir) + " " + Quote(path));
-            foreach (var file in Directory.GetFiles(contentDir, "*.nca").Select(file => new FileInfo(file)).Where(file => file.Length > MaxControlNcaSize))
+            var fileBaseOffset = ReadPfs0HeaderSize(path);
+
+            foreach (var entry in ParseNspNcaEntries(output).Where(entry => entry.Length <= MaxControlNcaSize))
             {
-                file.Delete();
+                CopyRange(path, Path.Combine(contentDir, entry.Name), fileBaseOffset + entry.Start, entry.Length);
             }
 
             return contentDir;
@@ -164,6 +167,16 @@ namespace SwitchLocalMetadata
             }
         }
 
+        private static IEnumerable<NcaContainerEntry> ParseNspNcaEntries(string output)
+        {
+            foreach (Match match in NspNcaRegex.Matches(output ?? string.Empty))
+            {
+                var start = long.Parse(match.Groups[2].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                var end = long.Parse(match.Groups[3].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                yield return new NcaContainerEntry(match.Groups[1].Value, start, end - start);
+            }
+        }
+
         private static long ExtractRootSecureOffset(string output)
         {
             var match = RootSecureRegex.Match(output ?? string.Empty);
@@ -173,6 +186,23 @@ namespace SwitchLocalMetadata
             }
 
             return long.Parse(match.Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+        }
+
+        private static long ReadPfs0HeaderSize(string sourcePath)
+        {
+            var header = new byte[16];
+            using (var stream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                var read = stream.Read(header, 0, header.Length);
+                if (read != header.Length || Encoding.ASCII.GetString(header, 0, 4) != "PFS0")
+                {
+                    throw new InvalidDataException("无法读取 NSP PFS0 头。");
+                }
+            }
+
+            var fileCount = BitConverter.ToUInt32(header, 4);
+            var stringTableSize = BitConverter.ToUInt32(header, 8);
+            return 0x10 + fileCount * 0x18 + stringTableSize;
         }
 
         private static long ReadHfs0HeaderSize(string sourcePath, long partitionOffset)

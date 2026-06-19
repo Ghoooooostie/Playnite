@@ -12,6 +12,7 @@ namespace SwitchLocalMetadata.Tests
     public class SwitchLocalRomReaderTests
     {
         private const string SamplePath = @"H:\乙女\猛獣たちとお姫様 for Nintendo Switch\猛獣たちとお姫様 for Nintendo Switch [010035001D1B2000].xci";
+        private const string SampleNspPath = @"H:\乙女\BROTHERS CONFLICT Precious Baby for Nintendo Switch\BROTHERS CONFLICT Precious Baby for Nintendo Switch [JPN][010037400DAAE000].nsp";
 
         [Test]
         public void TryRead_returns_control_nacp_data_and_icon_from_sample_xci()
@@ -24,6 +25,19 @@ namespace SwitchLocalMetadata.Tests
             Assert.That(result.TitleId, Is.EqualTo("010035001D1B2000"));
             Assert.That(result.DisplayName, Is.EqualTo("猛獣たちとお姫様 for Nintendo Switch"));
             Assert.That(result.Publisher, Is.EqualTo("アイディアファクトリー株式会社"));
+            Assert.That(result.ImageFileName, Does.EndWith(".jpg"));
+            Assert.That(result.ImageBytes.Length, Is.GreaterThan(1024));
+        }
+
+        [Test]
+        public void TryRead_returns_control_nacp_data_and_icon_from_sample_nsp()
+        {
+            Assert.That(File.Exists(SampleNspPath), Is.True, "示例 nsp 文件不存在。请确认 H: 盘已挂载。");
+
+            var result = SwitchLocalRomReader.TryRead(SampleNspPath, SwitchToolPathResolver.ResolveDefaults());
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.TitleId, Is.EqualTo("010037400DAAE000"));
             Assert.That(result.ImageFileName, Does.EndWith(".jpg"));
             Assert.That(result.ImageBytes.Length, Is.GreaterThan(1024));
         }
