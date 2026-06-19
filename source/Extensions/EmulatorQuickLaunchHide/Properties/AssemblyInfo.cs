@@ -13,5 +13,5 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 [assembly: Guid("941A6E02-3F88-483D-829A-8B1F7797C681")]
 [assembly: InternalsVisibleTo("EmulatorQuickLaunchHide.Tests")]
-[assembly: AssemblyVersion("1.3.0.0")]
-[assembly: AssemblyFileVersion("1.3.0.0")]
+[assembly: AssemblyVersion("1.14.0.0")]
+[assembly: AssemblyFileVersion("1.14.0.0")]

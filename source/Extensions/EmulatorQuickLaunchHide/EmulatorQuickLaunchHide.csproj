@@ -43,9 +43,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="EmulatorExitHotkeyService.cs" />
+    <Compile Include="EmulatorProcessCloser.cs" />
     <Compile Include="EmulatorQuickLaunchHidePlugin.cs" />
     <Compile Include="EmulatorQuickLaunchHideSettings.cs" />
     <Compile Include="EmulatorQuickLaunchHideSettingsView.cs" />
+    <Compile Include="ExitHotkeyBox.cs" />
+    <Compile Include="PlayniteWindowActivator.cs" />
     <Compile Include="ProcessWindowHandoff.cs" />
     <Compile Include="StartupOverlay.cs" />
   </ItemGroup>
@@ -62,4 +66,3 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
-
