@@ -46,6 +46,7 @@ namespace SwitchSmartImport
             {
                 HasSettings = true
             };
+            BindScheduledScanService();
         }
 
         internal SwitchSmartImportPlugin(
@@ -73,6 +74,7 @@ namespace SwitchSmartImport
             {
                 HasSettings = true
             };
+            BindScheduledScanService();
         }
 
         public override ISettings GetSettings(bool firstRunSettings)
@@ -90,11 +92,12 @@ namespace SwitchSmartImport
         {
             if (settingsViewModel.Settings.ScanOnStartup)
             {
-                RunScan();
+                RunScan(false);
             }
 
             if (settingsViewModel.Settings.EnableScheduledScan)
             {
+                scheduledScanService.UpdateInterval(settingsViewModel.Settings.ScheduledScanMinutes);
                 scheduledScanService.Start();
             }
         }
@@ -112,7 +115,7 @@ namespace SwitchSmartImport
             {
                 Description = "立即扫描 Switch 智能导入",
                 MenuSection = "@",
-                Action = delegate { RunScan(); }
+                Action = delegate { RunScan(true); }
             };
 
             yield return new MainMenuItem
@@ -125,18 +128,33 @@ namespace SwitchSmartImport
 
         internal void RunScan()
         {
-            var result = scanner.Scan();
-            pendingStore.Save(result.Candidates, DateTime.Now, result.SkippedItems);
+            RunScan(true);
+        }
 
-            if (PlayniteApi?.Notifications != null)
-            {
-                PlayniteApi.Notifications.Add("switch-smart-import-scan", "Switch 智能导入扫描完成。", NotificationType.Info);
-            }
+        // 执行一次扫描；手动扫描和定时扫描可共用。
+        internal void RunScan(bool notify)
+        {
+            var result = scanner.Scan();
+            HandleScanResult(result, notify, true);
         }
 
         internal void OpenPendingImportWindow()
         {
             pendingImportWindowService?.Show(CreatePendingImportViewModel());
+        }
+
+        // 设置保存后同步刷新定时扫描状态。
+        internal void ApplyRuntimeSettings()
+        {
+            scheduledScanService.UpdateInterval(settingsViewModel.Settings.ScheduledScanMinutes);
+            if (settingsViewModel.Settings.EnableScheduledScan)
+            {
+                scheduledScanService.Start();
+            }
+            else
+            {
+                scheduledScanService.Stop();
+            }
         }
 
         // 打开目录选择对话框。
@@ -175,6 +193,74 @@ namespace SwitchSmartImport
                 metadataRefreshService,
                 messageService,
                 progressService);
+        }
+
+        // 在关闭确认时，扫描后直接导入当前待处理候选。
+        private void AutoImportPendingCandidates()
+        {
+            var viewModel = CreatePendingImportViewModel();
+            if (viewModel.Candidates == null || viewModel.Candidates.Count == 0)
+            {
+                return;
+            }
+
+            viewModel.ImportSelected();
+        }
+
+        // 统一处理扫描完成后的缓存、通知和自动导入。
+        private void HandleScanResult(SwitchCandidateMergeResult result, bool notify, bool savePending)
+        {
+            result = result ?? new SwitchCandidateMergeResult();
+            if (savePending)
+            {
+                pendingStore.Save(result.Candidates, DateTime.Now, result.SkippedItems);
+            }
+
+            if (notify)
+            {
+                messageService.ShowInfo("Switch 智能导入扫描完成。");
+            }
+
+            if (!settingsViewModel.Settings.RequireManualConfirmation)
+            {
+                AutoImportPendingCandidates();
+            }
+        }
+
+        // 绑定定时扫描回调，让定时和手动走同一套导入流程。
+        private void BindScheduledScanService()
+        {
+            if (scheduledScanService == null)
+            {
+                return;
+            }
+
+            scheduledScanService.ScanCompleted -= OnScheduledScanCompleted;
+            scheduledScanService.ScanCompleted += OnScheduledScanCompleted;
+        }
+
+        // 定时扫描完成后自动通知并按设置导入。
+        private void OnScheduledScanCompleted(SwitchCandidateMergeResult result)
+        {
+            InvokeOnUiThread(() => HandleScanResult(result, true, false));
+        }
+
+        // 切回 UI 线程执行界面相关逻辑，避免定时器后台线程直接操作 Playnite UI。
+        private static void InvokeOnUiThread(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+            {
+                action();
+                return;
+            }
+
+            dispatcher.BeginInvoke(action, DispatcherPriority.Normal);
         }
 
         private class NullSwitchImportExecutor : ISwitchImportExecutor

@@ -30,6 +30,39 @@ namespace SwitchSmartImport.Tests
             Assert.AreEqual(1, store.LastCandidates.Count);
         }
 
+        [Test]
+        public void Scheduled_scan_interval_can_be_updated()
+        {
+            var scanner = new FakeSwitchImportScanner(new SwitchCandidateMergeResult());
+            var store = new FakeSwitchPendingImportStore();
+            var service = new SwitchScheduledScanService(scanner, store, 60);
+
+            service.UpdateInterval(1);
+
+            Assert.AreEqual(60000d, service.IntervalMilliseconds);
+        }
+
+        [Test]
+        public void Scheduled_scan_invokes_completed_event_after_saving_pending_store()
+        {
+            var scanner = new FakeSwitchImportScanner(new SwitchCandidateMergeResult
+            {
+                Candidates = new List<SwitchImportCandidate>
+                {
+                    new SwitchImportCandidate { GameName = "测试游戏", BasePath = @"H:\乙女\测试游戏\base.nsp" }
+                }
+            });
+            var store = new FakeSwitchPendingImportStore();
+            var service = new SwitchScheduledScanService(scanner, store);
+            var completedCount = 0;
+            service.ScanCompleted += _ => completedCount++;
+
+            service.RunOnce();
+
+            Assert.AreEqual(1, store.SaveCount);
+            Assert.AreEqual(1, completedCount);
+        }
+
         private class FakeSwitchImportScanner : ISwitchImportScanner
         {
             private readonly SwitchCandidateMergeResult result;

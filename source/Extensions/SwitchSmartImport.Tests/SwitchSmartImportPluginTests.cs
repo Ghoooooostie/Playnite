@@ -60,6 +60,86 @@ namespace SwitchSmartImport.Tests
             Assert.IsNotNull(windowService.LastViewModel);
         }
 
+        [Test]
+        public void Plugin_run_scan_auto_imports_when_manual_confirmation_is_disabled()
+        {
+            var store = new FakePendingStore();
+            var scanner = new FakeScanner(new SwitchCandidateMergeResult
+            {
+                Candidates = new List<SwitchImportCandidate>
+                {
+                    new SwitchImportCandidate { GameName = "测试游戏", BasePath = @"H:\乙女\测试游戏\base.nsp", Import = true }
+                }
+            });
+            var executor = new FakeImportExecutor();
+            var metadata = new FakeMetadataRefreshService();
+            var messages = new FakeMessageService();
+            var plugin = new SwitchSmartImportPlugin(
+                new FakePlayniteApi(),
+                new SwitchSmartImportSettings
+                {
+                    ScanOnStartup = false,
+                    RequireManualConfirmation = false,
+                    MetadataSource = SwitchMetadataSource.SwitchLocalMetadata
+                },
+                scanner,
+                store,
+                null,
+                executor,
+                metadata,
+                messages,
+                new FakeProgressService(),
+                new FakePendingWindowService());
+
+            plugin.RunScan();
+
+            Assert.AreEqual(1, scanner.ScanCount);
+            Assert.AreEqual(1, executor.ImportCallCount);
+            Assert.AreEqual(1, metadata.RefreshCallCount);
+            Assert.IsTrue(messages.InfoMessages.Any(a => a.Contains("扫描完成")));
+            Assert.IsTrue(messages.InfoMessages.Any(a => a.Contains("导入完成")));
+        }
+
+        [Test]
+        public void Plugin_scheduled_scan_auto_imports_and_notifies_when_manual_confirmation_is_disabled()
+        {
+            var store = new FakePendingStore();
+            var scanner = new FakeScanner(new SwitchCandidateMergeResult
+            {
+                Candidates = new List<SwitchImportCandidate>
+                {
+                    new SwitchImportCandidate { GameName = "测试游戏", BasePath = @"H:\乙女\测试游戏\base.nsp", Import = true }
+                }
+            });
+            var executor = new FakeImportExecutor();
+            var metadata = new FakeMetadataRefreshService();
+            var messages = new FakeMessageService();
+            var scheduledService = new SwitchScheduledScanService(scanner, store, 60);
+            var plugin = new SwitchSmartImportPlugin(
+                new FakePlayniteApi(),
+                new SwitchSmartImportSettings
+                {
+                    RequireManualConfirmation = false,
+                    MetadataSource = SwitchMetadataSource.SwitchLocalMetadata
+                },
+                scanner,
+                store,
+                scheduledService,
+                executor,
+                metadata,
+                messages,
+                new FakeProgressService(),
+                new FakePendingWindowService());
+
+            scheduledService.RunOnce();
+
+            Assert.AreEqual(1, scanner.ScanCount);
+            Assert.AreEqual(1, executor.ImportCallCount);
+            Assert.AreEqual(1, metadata.RefreshCallCount);
+            Assert.IsTrue(messages.InfoMessages.Any(a => a.Contains("扫描完成")));
+            Assert.IsTrue(messages.InfoMessages.Any(a => a.Contains("导入完成")));
+        }
+
         private class FakePlayniteApi : IPlayniteAPI
         {
             private readonly IDialogsFactory dialogs;
@@ -108,28 +188,90 @@ namespace SwitchSmartImport.Tests
 
         private class FakeScanner : ISwitchImportScanner
         {
-            public SwitchCandidateMergeResult Scan() => new SwitchCandidateMergeResult();
+            private readonly SwitchCandidateMergeResult result;
+
+            public int ScanCount { get; private set; }
+
+            public FakeScanner(SwitchCandidateMergeResult result = null)
+            {
+                this.result = result ?? new SwitchCandidateMergeResult();
+            }
+
+            public SwitchCandidateMergeResult Scan()
+            {
+                ScanCount++;
+                return result;
+            }
         }
 
         private class FakePendingStore : ISwitchPendingImportStore
         {
-            public SwitchPendingImportSnapshot Load() => new SwitchPendingImportSnapshot();
-            public void Save(List<SwitchImportCandidate> candidates, DateTime savedAt, List<SwitchSkippedItem> skippedItems = null) { }
+            public int SaveCount { get; private set; }
+            public List<SwitchImportCandidate> LastCandidates { get; private set; } = new List<SwitchImportCandidate>();
+            public List<SwitchSkippedItem> LastSkippedItems { get; private set; } = new List<SwitchSkippedItem>();
+            public DateTime LastSavedAt { get; private set; }
+
+            public SwitchPendingImportSnapshot Load() => new SwitchPendingImportSnapshot
+            {
+                Candidates = LastCandidates.ToList(),
+                SkippedItems = LastSkippedItems.ToList(),
+                SavedAt = LastSavedAt
+            };
+            public void Save(List<SwitchImportCandidate> candidates, DateTime savedAt, List<SwitchSkippedItem> skippedItems = null)
+            {
+                SaveCount++;
+                LastCandidates = candidates?.Select(CloneCandidate).ToList() ?? new List<SwitchImportCandidate>();
+                LastSkippedItems = skippedItems?.ToList() ?? new List<SwitchSkippedItem>();
+                LastSavedAt = savedAt;
+            }
+
+            private static SwitchImportCandidate CloneCandidate(SwitchImportCandidate candidate)
+            {
+                if (candidate == null)
+                {
+                    return null;
+                }
+
+                return new SwitchImportCandidate
+                {
+                    GameName = candidate.GameName,
+                    BasePath = candidate.BasePath,
+                    HighestPatchVersion = candidate.HighestPatchVersion,
+                    Import = candidate.Import,
+                    SelectedPlatformId = candidate.SelectedPlatformId
+                };
+            }
         }
 
         private class FakeImportExecutor : ISwitchImportExecutor
         {
-            public List<Game> Import(IEnumerable<SwitchImportCandidate> candidates, SwitchSmartImportSettings settings) => new List<Game>();
+            public int ImportCallCount { get; private set; }
+
+            public List<Game> Import(IEnumerable<SwitchImportCandidate> candidates, SwitchSmartImportSettings settings)
+            {
+                ImportCallCount++;
+                return new List<Game> { new Game("测试游戏") { Id = Guid.NewGuid() } };
+            }
         }
 
         private class FakeMetadataRefreshService : ISwitchMetadataRefreshService
         {
-            public void Refresh(IEnumerable<Game> games, SwitchMetadataSource source) { }
+            public int RefreshCallCount { get; private set; }
+
+            public void Refresh(IEnumerable<Game> games, SwitchMetadataSource source)
+            {
+                RefreshCallCount++;
+            }
         }
 
         private class FakeMessageService : ISwitchMessageService
         {
-            public void ShowInfo(string message) { }
+            public List<string> InfoMessages { get; } = new List<string>();
+
+            public void ShowInfo(string message)
+            {
+                InfoMessages.Add(message);
+            }
             public void ShowError(string message, string caption) { }
         }
 

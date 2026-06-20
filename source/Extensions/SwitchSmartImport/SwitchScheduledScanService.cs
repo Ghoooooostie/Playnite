@@ -11,6 +11,9 @@ namespace SwitchSmartImport
         private readonly ISwitchImportScanner scanner;
         private readonly ISwitchPendingImportStore store;
         private readonly Timer timer;
+        private readonly object runLock = new object();
+
+        public event Action<SwitchCandidateMergeResult> ScanCompleted;
 
         public SwitchScheduledScanService(ISwitchImportScanner scanner, ISwitchPendingImportStore store, double intervalMinutes = 60)
         {
@@ -36,9 +39,22 @@ namespace SwitchSmartImport
         // 手动执行一次扫描。
         public void RunOnce()
         {
-            var result = scanner.Scan();
-            store.Save(result.Candidates.ToList(), DateTime.Now, result.SkippedItems.ToList());
+            lock (runLock)
+            {
+                var result = scanner.Scan();
+                store.Save(result.Candidates.ToList(), DateTime.Now, result.SkippedItems.ToList());
+                ScanCompleted?.Invoke(result);
+            }
         }
+
+        // 更新定时扫描间隔。
+        public void UpdateInterval(double intervalMinutes)
+        {
+            timer.Interval = Math.Max(1, intervalMinutes) * 60 * 1000;
+        }
+
+        // 当前扫描间隔，供测试和诊断使用。
+        public double IntervalMilliseconds => timer.Interval;
 
         public void Dispose()
         {

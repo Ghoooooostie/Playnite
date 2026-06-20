@@ -8,6 +8,7 @@ using Playnite.SDK.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -149,6 +150,7 @@ namespace SwitchSmartImport.Tests
         private class FakeGameDatabaseApi : IGameDatabaseAPI
         {
             public List<Game> UpdatedGames { get; } = new List<Game>();
+            public List<string> AddedFiles { get; } = new List<string>();
             public string DatabasePath => string.Empty;
             public IItemCollection<Game> Games { get; }
             public IItemCollection<Platform> Platforms { get; } = new FakePlatformCollection();
@@ -168,7 +170,45 @@ namespace SwitchSmartImport.Tests
             public IItemCollection<FilterPreset> FilterPresets => new FakeItemCollection<FilterPreset>();
             public bool IsOpen => true;
             public event EventHandler DatabaseOpened { add { } remove { } }
-            public string AddFile(string path, Guid parentId) => path;
+            public string AddFile(string path, Guid parentId)
+            {
+                AddedFiles.Add(path);
+                var fileName = Path.GetFileName(path) ?? string.Empty;
+                if (fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (fileName.StartsWith("icon", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "db-icon-id";
+                    }
+
+                    if (fileName.StartsWith("cover", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "db-cover-id";
+                    }
+
+                    if (fileName.StartsWith("bg", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "db-background-id";
+                    }
+
+                    if (AddedFiles.Count == 1)
+                    {
+                        return "db-icon-id";
+                    }
+
+                    if (AddedFiles.Count == 2)
+                    {
+                        return "db-cover-id";
+                    }
+
+                    if (AddedFiles.Count == 3)
+                    {
+                        return "db-background-id";
+                    }
+                }
+
+                return "db-file-id";
+            }
             public void SaveFile(string id, string path) { }
             public void RemoveFile(string id) { }
             public IDisposable BufferedUpdate() => null;

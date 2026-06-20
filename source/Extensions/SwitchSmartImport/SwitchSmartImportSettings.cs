@@ -228,6 +228,7 @@ namespace SwitchSmartImport
         {
             NormalizeSettings();
             plugin?.SavePluginSettings(Settings);
+            plugin?.ApplyRuntimeSettings();
         }
 
         public bool VerifySettings(out List<string> errors)
