@@ -55,6 +55,7 @@ namespace GameScreenshots.Tests
 
             Assert.IsTrue(buttons.Exists(a => HasCommandBinding(a, "ToggleManagementCommand")));
             Assert.IsTrue(buttons.Exists(a => HasCommandBinding(a, "DeleteSelectedCommand")));
+            Assert.IsTrue(buttons.Exists(a => HasCommandBinding(a, "SetBackgroundCommand")));
         }
 
         [Test]
@@ -67,6 +68,7 @@ namespace GameScreenshots.Tests
 
             Assert.IsTrue(buttons.Exists(a => HasCommandBinding(a, "ToggleManagementCommand")));
             Assert.IsTrue(buttons.Exists(a => HasCommandBinding(a, "DeleteSelectedCommand")));
+            Assert.IsTrue(buttons.Exists(a => HasCommandBinding(a, "SetBackgroundCommand")));
         }
 
         [Test]
@@ -184,7 +186,7 @@ namespace GameScreenshots.Tests
         // 创建测试用视图模型。
         private static GameScreenshotsViewModel CreateViewModel(Game game)
         {
-            return new GameScreenshotsViewModel(new FakeScreenshotStore(), null, null, game);
+            return new GameScreenshotsViewModel(new FakeScreenshotStore(), null, null, null, game);
         }
 
         // 测试用空截图存储。

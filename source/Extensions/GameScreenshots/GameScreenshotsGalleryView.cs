@@ -41,6 +41,7 @@ namespace GameScreenshots
             DockPanel.SetDock(actions, Dock.Right);
             actions.Children.Add(CreateButton("刷新", "RefreshCommand"));
             actions.Children.Add(CreateButton("管理", "ToggleManagementCommand", "ManagementButtonText"));
+            actions.Children.Add(CreateButton("设为背景", "SetBackgroundCommand"));
             actions.Children.Add(CreateButton("删除所选", "DeleteSelectedCommand"));
             toolbar.Children.Add(actions);
 

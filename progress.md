@@ -43,3 +43,8 @@
 - 2026-06-19：GameScreenshots 1.5 将截图页和画廊页改为 ScrollViewer + ItemsControl，测试 20 通过 0 失败，Release 构建成功，包内容正确。
 - 2026-06-20：GameScreenshots 1.6 增加截图画廊按游戏分组，测试 21 通过 0 失败，Release 构建成功，包内容正确。
 - 2026-06-20：GameScreenshots 1.7 新增截图管理、多选和删除，测试 28 通过 0 失败，Release 构建成功，包内容正确。
+- 2026-06-20：GameScreenshots 新增设为背景按钮，可把选中截图写入当前游戏背景图，测试 34 通过 0 失败，Release 构建成功。
+- 2026-06-20：GameScreenshots 版本升到 1.9，并生成 artifacts/Game_Screenshots_5139A212-C04C-419F-A534-71DA19581A63_1_9.pext。
+- 2026-06-20：确认 Switch 智能导入要优先按文件名标记与 Title ID 识别，不能依赖固定本体/补丁/DLC 分目录。
+- 2026-06-20：SwitchSmartImport 1.0 完成，支持多目录扫描配置、待确认列表、补丁/DLC 过滤、最近扫描时间显示和可选 Switch Local Metadata 全量刷新。
+- 2026-06-20：已生成 artifacts/Switch_Smart_Import_5E230E44-29A3-4A76-AF78-C71A6B6C5D54_1_0.pext，并验包确认仅包含 extension.yaml 和 SwitchSmartImport.dll。

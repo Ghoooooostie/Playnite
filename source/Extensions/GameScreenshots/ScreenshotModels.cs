@@ -156,4 +156,10 @@ namespace GameScreenshots
     {
         void OpenGameScreenshots(Game game);
     }
+
+    // 负责把截图设置为游戏背景图。
+    public interface IGameBackgroundService
+    {
+        void SetBackground(Game game, string imagePath);
+    }
 }

@@ -18,7 +18,7 @@ namespace GameScreenshots.Tests
             var game = new Game("Dave the Diver") { Id = Guid.Parse("c884ec6e-4ae5-4083-af3f-6da1de5aafb5") };
             var store = new FakeScreenshotStore();
             var capture = new FakeGameScreenshotService();
-            var viewModel = new GameScreenshotsViewModel(store, capture, null, game);
+            var viewModel = new GameScreenshotsViewModel(store, capture, null, null, game);
 
             store.Items.Add(new ScreenshotItem
             {
@@ -39,7 +39,7 @@ namespace GameScreenshots.Tests
         {
             var store = new FakeScreenshotStore();
             var capture = new FakeGameScreenshotService();
-            var viewModel = new GameScreenshotsViewModel(store, capture, null, null);
+            var viewModel = new GameScreenshotsViewModel(store, capture, null, null, null);
 
             var item = new ScreenshotItem
             {
@@ -59,7 +59,7 @@ namespace GameScreenshots.Tests
         [Test]
         public void Gallery_view_title_is_gallery()
         {
-            var viewModel = new GameScreenshotsViewModel(new FakeScreenshotStore(), null, null, null);
+            var viewModel = new GameScreenshotsViewModel(new FakeScreenshotStore(), null, null, null, null);
 
             Assert.AreEqual("画廊", viewModel.Title);
         }
@@ -93,7 +93,7 @@ namespace GameScreenshots.Tests
                 CapturedAt = new DateTime(2026, 6, 19, 20, 24, 19)
             });
 
-            var viewModel = new GameScreenshotsViewModel(store, null, null, null);
+            var viewModel = new GameScreenshotsViewModel(store, null, null, null, null);
 
             Assert.AreEqual(2, viewModel.ScreenshotGroups.Count);
             Assert.AreEqual("ANGEL WHISPER", viewModel.ScreenshotGroups[0].GameName);
@@ -115,7 +115,7 @@ namespace GameScreenshots.Tests
             store.Items.Add(first);
             store.Items.Add(second);
             store.Items.Add(third);
-            var viewModel = new GameScreenshotsViewModel(store, null, null, null);
+            var viewModel = new GameScreenshotsViewModel(store, null, null, null, null);
 
             viewModel.ToggleManagementCommand.Execute(null);
             viewModel.ToggleSelectionCommand.Execute(first);
@@ -142,7 +142,7 @@ namespace GameScreenshots.Tests
                 "20260620-100000.png",
                 new DateTime(2026, 6, 20, 10, 0, 0));
             store.Items.Add(item);
-            var viewModel = new GameScreenshotsViewModel(store, null, null, null);
+            var viewModel = new GameScreenshotsViewModel(store, null, null, null, null);
 
             viewModel.ToggleManagementCommand.Execute(null);
             viewModel.ToggleSelectionCommand.Execute(item);
@@ -157,7 +157,7 @@ namespace GameScreenshots.Tests
         public void Management_button_text_changes_with_management_mode()
         {
             var store = new FakeScreenshotStore();
-            var viewModel = new GameScreenshotsViewModel(store, null, null, null);
+            var viewModel = new GameScreenshotsViewModel(store, null, null, null, null);
 
             Assert.AreEqual("管理", viewModel.ManagementButtonText);
 
@@ -167,11 +167,72 @@ namespace GameScreenshots.Tests
         }
 
         [Test]
+        public void Set_background_uses_selected_screenshot_and_game()
+        {
+            var store = new FakeScreenshotStore();
+            var game = new Game("Dave the Diver") { Id = Guid.Parse("c884ec6e-4ae5-4083-af3f-6da1de5aafb5") };
+            var item = CreateItem(game.Id, game.Name, "20260620-120000.png", new DateTime(2026, 6, 20, 12, 0, 0));
+            store.Items.Add(item);
+            var background = new FakeGameBackgroundService();
+            var messages = new FakeScreenshotMessageService();
+            var viewModel = new GameScreenshotsViewModel(store, null, messages, background, game);
+
+            viewModel.ToggleManagementCommand.Execute(null);
+            viewModel.ToggleSelectionCommand.Execute(item);
+            viewModel.SetBackgroundCommand.Execute(null);
+
+            Assert.AreEqual(game.Id, background.LastGame.Id);
+            Assert.AreEqual(item.FilePath, background.LastImagePath);
+            Assert.AreEqual(1, messages.InfoMessages.Count);
+        }
+
+        [Test]
+        public void Gallery_set_background_uses_selected_screenshot_game()
+        {
+            var store = new FakeScreenshotStore();
+            var gameId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+            var item = CreateItem(gameId, "Dave the Diver", "20260620-120000.png", new DateTime(2026, 6, 20, 12, 0, 0));
+            store.Items.Add(item);
+            var background = new FakeGameBackgroundService();
+            var viewModel = new GameScreenshotsViewModel(store, null, null, background, null);
+
+            viewModel.ToggleManagementCommand.Execute(null);
+            viewModel.ToggleSelectionCommand.Execute(item);
+            viewModel.SetBackgroundCommand.Execute(null);
+
+            Assert.AreEqual(gameId, background.LastGame.Id);
+            Assert.AreEqual(item.FilePath, background.LastImagePath);
+            Assert.AreEqual(item.GameName, background.LastGame.Name);
+        }
+
+        [Test]
+        public void Set_background_requires_single_selection()
+        {
+            var store = new FakeScreenshotStore();
+            var item = CreateItem(
+                Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                "Dave the Diver",
+                "20260620-120000.png",
+                new DateTime(2026, 6, 20, 12, 0, 0));
+            store.Items.Add(item);
+            var background = new FakeGameBackgroundService();
+            var viewModel = new GameScreenshotsViewModel(store, null, null, background, null);
+
+            Assert.IsFalse(viewModel.SetBackgroundCommand.CanExecute(null));
+
+            viewModel.ToggleManagementCommand.Execute(null);
+            Assert.IsFalse(viewModel.SetBackgroundCommand.CanExecute(null));
+
+            viewModel.ToggleSelectionCommand.Execute(item);
+            Assert.IsTrue(viewModel.SetBackgroundCommand.CanExecute(null));
+        }
+
+        [Test]
         public void Disposed_view_does_not_refresh_after_screenshot_is_saved()
         {
             var store = new FakeScreenshotStore();
             var capture = new FakeGameScreenshotService();
-            var viewModel = new GameScreenshotsViewModel(store, capture, null, null);
+            var viewModel = new GameScreenshotsViewModel(store, capture, null, null, null);
 
             viewModel.Dispose();
             store.Items.Add(new ScreenshotItem
@@ -253,6 +314,42 @@ namespace GameScreenshots.Tests
                 {
                     ScreenshotCaptured(this, new ScreenshotCapturedEventArgs(item));
                 }
+            }
+        }
+
+        // 测试用背景设置服务。
+        private class FakeGameBackgroundService : IGameBackgroundService
+        {
+            public Game LastGame { get; private set; }
+            public string LastImagePath { get; private set; }
+
+            public void SetBackground(Game game, string imagePath)
+            {
+                LastGame = game;
+                LastImagePath = imagePath;
+            }
+        }
+
+        // 测试用消息服务。
+        private class FakeScreenshotMessageService : IScreenshotMessageService
+        {
+            public List<string> InfoMessages { get; private set; }
+            public List<string> ErrorMessages { get; private set; }
+
+            public FakeScreenshotMessageService()
+            {
+                InfoMessages = new List<string>();
+                ErrorMessages = new List<string>();
+            }
+
+            public void ShowInfo(string message)
+            {
+                InfoMessages.Add(message);
+            }
+
+            public void ShowError(string message)
+            {
+                ErrorMessages.Add(message);
             }
         }
     }

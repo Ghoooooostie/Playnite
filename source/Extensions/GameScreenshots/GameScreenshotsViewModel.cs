@@ -15,6 +15,7 @@ namespace GameScreenshots
         private readonly IScreenshotStore store;
         private readonly IGameScreenshotService screenshotService;
         private readonly IScreenshotMessageService messages;
+        private readonly IGameBackgroundService backgrounds;
         private readonly Game game;
         private string title;
         private bool isManaging;
@@ -29,6 +30,7 @@ namespace GameScreenshots
         public ICommand ToggleManagementCommand { get; private set; }
         public ICommand ToggleSelectionCommand { get; private set; }
         public ICommand DeleteSelectedCommand { get; private set; }
+        public ICommand SetBackgroundCommand { get; private set; }
 
         public string Title
         {
@@ -62,6 +64,7 @@ namespace GameScreenshots
             IScreenshotStore store,
             IGameScreenshotService screenshotService,
             IScreenshotMessageService messages,
+            IGameBackgroundService backgrounds,
             Game game)
         {
             if (store == null)
@@ -72,6 +75,7 @@ namespace GameScreenshots
             this.store = store;
             this.screenshotService = screenshotService;
             this.messages = messages;
+            this.backgrounds = backgrounds;
             this.game = game;
             Screenshots = new ObservableCollection<ScreenshotItem>();
             ScreenshotGroups = new ObservableCollection<ScreenshotGameGroup>();
@@ -81,6 +85,7 @@ namespace GameScreenshots
             ToggleManagementCommand = new RelayCommand(ToggleManagement);
             ToggleSelectionCommand = new RelayCommand<ScreenshotItem>(ToggleSelection);
             DeleteSelectedCommand = new RelayCommand(DeleteSelected, HasSelection);
+            SetBackgroundCommand = new RelayCommand(SetBackground, CanSetBackground);
             Title = game == null ? "画廊" : "截图 - " + game.Name;
             if (screenshotService != null)
             {
@@ -227,10 +232,34 @@ namespace GameScreenshots
             Refresh();
         }
 
+        // 将当前选中的单张截图设为游戏背景图。
+        private void SetBackground()
+        {
+            var selected = Screenshots.Where(a => a.IsSelected).ToList();
+            if (selected.Count != 1 || backgrounds == null)
+            {
+                return;
+            }
+
+            var item = selected[0];
+            var targetGame = game ?? new Game(item.GameName) { Id = item.GameId };
+            backgrounds.SetBackground(targetGame, item.FilePath);
+            if (messages != null)
+            {
+                messages.ShowInfo("背景已更新：" + item.FileName);
+            }
+        }
+
         // 判断是否有选中截图。
         private bool HasSelection()
         {
             return SelectedCount > 0;
+        }
+
+        // 只允许用单张已选截图设置背景。
+        private bool CanSetBackground()
+        {
+            return backgrounds != null && SelectedCount == 1;
         }
 
         // 清空截图选择。

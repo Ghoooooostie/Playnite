@@ -25,3 +25,6 @@
 - 2026-06-20：Playnite 全局游戏启动后脚本可能拿到 StartedProcessId=0；自动化脚本不能因此抛错，应静默跳过或改放到具体游戏/模拟器脚本。
 - 2026-06-20：Playnite 插件如果同时支持桌面和全屏，桌面构造阶段不要提前初始化全屏状态；全屏状态应在 GetGameViewControl 里按需创建，避免桌面版插件加载失败导致入口消失。
 - 2026-06-20：Playnite 全局脚本输入框里不要写复杂的一行脚本块，例如 @(... | ForEach-Object { ... })；优先让脚本自己读取 $Game，只传必要参数。
+- 2026-06-20：GameScreenshots 如果桌面/侧边栏入口正常、只有 Fullscreen 首页不显示，先检查当前正在使用的 Fullscreen 主题自己的 `Views/Main.xaml` 是否包含 `GameScreenshots_FullscreenHomeScreenshots` 槽位；不要先误判成插件没装好，也不要默认用户用的是 `Default` 主题。
+- 2026-06-20：只要改了 Playnite 插件并交付发布结果，每次都要同时生成对应的 `.pext`，不能只给 DLL 或只做 Release 构建。
+- 2026-06-20：生成 Playnite 插件 `.pext`` 时必须同步更新 `extension.yaml` 里的版本号，并按新版本号产出包名，不能沿用旧版本直接重打包。

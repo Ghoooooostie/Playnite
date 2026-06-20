@@ -20,6 +20,7 @@ namespace GameScreenshots
         private readonly IScreenshotHotkeyService hotkeyService;
         private readonly IGameSelectionProvider selectionProvider;
         private readonly IScreenshotMessageService messages;
+        private readonly IGameBackgroundService backgrounds;
         private IScreenshotWindowService windows;
         private bool hotkeyRegistered;
 
@@ -33,6 +34,7 @@ namespace GameScreenshots
             hotkeyService = new ScreenshotHotkeyService();
             selectionProvider = new PlayniteGameSelectionProvider(api);
             messages = new PlayniteScreenshotMessageService(api);
+            backgrounds = new PlayniteGameBackgroundService(api);
             settingsViewModel = new GameScreenshotsSettingsViewModel(this);
             ReloadScreenshotServices();
             Properties = new GenericPluginProperties { HasSettings = true };
@@ -46,7 +48,8 @@ namespace GameScreenshots
             IScreenshotHotkeyService hotkeyService,
             IGameSelectionProvider selectionProvider,
             IScreenshotMessageService messages,
-            IScreenshotWindowService windows) : base(api)
+            IScreenshotWindowService windows,
+            IGameBackgroundService backgrounds) : base(api)
         {
             this.store = null;
             this.screenshotService = screenshotService;
@@ -54,6 +57,7 @@ namespace GameScreenshots
             this.selectionProvider = selectionProvider;
             this.messages = messages;
             this.windows = windows;
+            this.backgrounds = backgrounds;
             settingsViewModel = new GameScreenshotsSettingsViewModel(this, settings);
             Properties = new GenericPluginProperties { HasSettings = true };
             RegisterCustomElementSupport();
@@ -107,7 +111,7 @@ namespace GameScreenshots
             var storePath = ScreenshotPathResolver.Resolve(settingsViewModel.Settings.ScreenshotDirectory, GetDefaultScreenshotDirectory());
             store = new ScreenshotStore(storePath);
             screenshotService = new GameScreenshotService(new ScreenshotCaptureService(), store);
-            windows = new PlayniteScreenshotWindowService(PlayniteApi, store, screenshotService, messages);
+            windows = new PlayniteScreenshotWindowService(PlayniteApi, store, screenshotService, messages, backgrounds);
         }
 
         // 获取插件默认截图目录。
@@ -178,7 +182,7 @@ namespace GameScreenshots
                 Icon = CreateSidebarIcon(),
                 Opened = delegate
                 {
-                    return new GameScreenshotsGalleryView(new GameScreenshotsViewModel(store, screenshotService, messages, null));
+                    return new GameScreenshotsGalleryView(new GameScreenshotsViewModel(store, screenshotService, messages, backgrounds, null));
                 }
             };
         }

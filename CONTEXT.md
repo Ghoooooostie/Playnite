@@ -1,7 +1,7 @@
 ﻿# CONTEXT
 
-当前目标：给 GameScreenshots 新增截图管理功能，支持多选和删除。
-当前进度：已实现管理/完成按钮、删除所选按钮、卡片勾选、多选删除、路径安全校验，生成 GameScreenshots 1.7 包，并把当前 Playnite 插件目录指向 GameScreenshots.1.7.dll。
-下一步：重启 Playnite 后在截图页或截图画廊进入管理模式，勾选截图并删除验证。
-注意事项：删除只允许插件截图目录内的 PNG 文件；其它任务的未提交改动未处理。
-最后更新时间：2026-06-20 00:35:00
+当前目标：让 SwitchLocalMetadata 在本地没有横图时自动联网搜索背景图。
+当前进度：已接入自动搜索链，本地横图优先，随后尝试官网页 og:image，再退到 SteamGridDB 页面图；已生成 1.4 release 包。
+下一步：把 SwitchLocalMetadata 1.4 安装到 Playnite，抽查几款冷门日文 Switch 游戏是否补到背景。
+注意事项：Nintendo 商店搜索页有风控，不作为自动抓取入口；当前实现优先 Otomate、PROTOTYPE、Dramatic Create 等官网结果。
+最后更新时间：2026-06-20 13:00:00

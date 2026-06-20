@@ -45,10 +45,14 @@ namespace GameScreenshots.TestRunner
                 viewModelTests.Delete_selected_screenshots_removes_files_and_refreshes_gallery_groups,
                 viewModelTests.Leaving_management_clears_selected_screenshots,
                 viewModelTests.Management_button_text_changes_with_management_mode,
+                viewModelTests.Set_background_uses_selected_screenshot_and_game,
+                viewModelTests.Gallery_set_background_uses_selected_screenshot_game,
+                viewModelTests.Set_background_requires_single_selection,
                 viewModelTests.Disposed_view_does_not_refresh_after_screenshot_is_saved,
                 pathTests.Empty_custom_directory_uses_default_screenshot_directory,
                 pathTests.Custom_directory_overrides_default_screenshot_directory,
-                messageTests.Info_message_uses_notification_instead_of_dialog
+                messageTests.Info_message_uses_notification_instead_of_dialog,
+                messageTests.Background_service_updates_game_background_image
             };
 
             var failed = 0;

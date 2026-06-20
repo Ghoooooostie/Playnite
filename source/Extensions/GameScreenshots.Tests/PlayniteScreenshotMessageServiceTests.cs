@@ -8,6 +8,8 @@ using Playnite.SDK.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -30,11 +32,41 @@ namespace GameScreenshots.Tests
             Assert.AreEqual(0, api.Dialogs.ShowMessageCount);
         }
 
+        [Test]
+        public void Background_service_updates_game_background_image()
+        {
+            var game = new Game("Dave the Diver") { Id = Guid.Parse("c884ec6e-4ae5-4083-af3f-6da1de5aafb5") };
+            var database = new FakeDatabaseApi(game);
+            var api = new FakePlayniteApi(database);
+            var service = new PlayniteGameBackgroundService(api);
+            var imagePath = Path.Combine(Path.GetTempPath(), "GameScreenshots-" + Guid.NewGuid().ToString("N") + ".png");
+
+            try
+            {
+                File.WriteAllBytes(imagePath, new byte[] { 1, 2, 3, 4 });
+
+                service.SetBackground(game, imagePath);
+
+                Assert.AreEqual("db::" + Path.GetFileName(imagePath), database.Games.Get(game.Id).BackgroundImage);
+                Assert.AreEqual(imagePath, database.LastAddedFilePath);
+                Assert.AreEqual(game.Id, database.LastAddedParentId);
+                Assert.AreEqual(1, database.Games.UpdateCount);
+            }
+            finally
+            {
+                if (File.Exists(imagePath))
+                {
+                    File.Delete(imagePath);
+                }
+            }
+        }
+
         // 测试用 Playnite API。
         private class FakePlayniteApi : IPlayniteAPI
         {
             public FakeDialogs Dialogs { get; private set; }
             public FakeNotifications Notifications { get; private set; }
+            public IGameDatabaseAPI Database { get; private set; }
 
             public FakePlayniteApi()
             {
@@ -42,10 +74,16 @@ namespace GameScreenshots.Tests
                 Notifications = new FakeNotifications();
             }
 
+            public FakePlayniteApi(IGameDatabaseAPI database)
+            {
+                Dialogs = new FakeDialogs();
+                Notifications = new FakeNotifications();
+                Database = database;
+            }
+
             IDialogsFactory IPlayniteAPI.Dialogs { get { return Dialogs; } }
             INotificationsAPI IPlayniteAPI.Notifications { get { return Notifications; } }
             public IMainViewAPI MainView { get { throw new NotImplementedException(); } }
-            public IGameDatabaseAPI Database { get { throw new NotImplementedException(); } }
             public IPlaynitePathsAPI Paths { get { throw new NotImplementedException(); } }
             public IPlayniteInfoAPI ApplicationInfo { get { throw new NotImplementedException(); } }
             public IWebViewFactory WebViews { get { throw new NotImplementedException(); } }
@@ -64,6 +102,117 @@ namespace GameScreenshots.Tests
             public void AddSettingsSupport(Plugin source, AddSettingsSupportArgs args) { throw new NotImplementedException(); }
             public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args) { throw new NotImplementedException(); }
             public List<GamepadController> GetConnectedControllers() { throw new NotImplementedException(); }
+        }
+
+        // 测试用数据库 API。
+        private class FakeDatabaseApi : IGameDatabaseAPI
+        {
+            public FakeGameCollection Games { get; private set; }
+            IItemCollection<Game> IGameDatabase.Games { get { return Games; } }
+            public string LastAddedFilePath { get; private set; }
+            public Guid LastAddedParentId { get; private set; }
+
+            public FakeDatabaseApi(Game game)
+            {
+                Games = new FakeGameCollection(game);
+            }
+
+            public string DatabasePath { get { throw new NotImplementedException(); } }
+            public bool IsOpen { get { return true; } }
+            public event EventHandler DatabaseOpened;
+            public IItemCollection<Platform> Platforms { get { throw new NotImplementedException(); } }
+            public IItemCollection<Emulator> Emulators { get { throw new NotImplementedException(); } }
+            public IItemCollection<Genre> Genres { get { throw new NotImplementedException(); } }
+            public IItemCollection<Company> Companies { get { throw new NotImplementedException(); } }
+            public IItemCollection<Tag> Tags { get { throw new NotImplementedException(); } }
+            public IItemCollection<Category> Categories { get { throw new NotImplementedException(); } }
+            public IItemCollection<Series> Series { get { throw new NotImplementedException(); } }
+            public IItemCollection<AgeRating> AgeRatings { get { throw new NotImplementedException(); } }
+            public IItemCollection<Region> Regions { get { throw new NotImplementedException(); } }
+            public IItemCollection<GameSource> Sources { get { throw new NotImplementedException(); } }
+            public IItemCollection<GameFeature> Features { get { throw new NotImplementedException(); } }
+            public IItemCollection<GameScannerConfig> GameScanners { get { throw new NotImplementedException(); } }
+            public IItemCollection<CompletionStatus> CompletionStatuses { get { throw new NotImplementedException(); } }
+            public IItemCollection<Playnite.ImportExclusionItem> ImportExclusions { get { throw new NotImplementedException(); } }
+            public IItemCollection<FilterPreset> FilterPresets { get { throw new NotImplementedException(); } }
+
+            public string AddFile(string path, Guid parentId)
+            {
+                LastAddedFilePath = path;
+                LastAddedParentId = parentId;
+                return "db::" + System.IO.Path.GetFileName(path);
+            }
+
+            public void SaveFile(string id, string path) { throw new NotImplementedException(); }
+            public void RemoveFile(string id) { throw new NotImplementedException(); }
+            public IDisposable BufferedUpdate() { throw new NotImplementedException(); }
+            public void BeginBufferUpdate() { throw new NotImplementedException(); }
+            public void EndBufferUpdate() { throw new NotImplementedException(); }
+            public string GetFileStoragePath(Guid parentId) { throw new NotImplementedException(); }
+            public string GetFullFilePath(string databasePath) { throw new NotImplementedException(); }
+            public Game ImportGame(GameMetadata game) { throw new NotImplementedException(); }
+            public Game ImportGame(GameMetadata game, LibraryPlugin sourcePlugin) { throw new NotImplementedException(); }
+            public bool GetGameMatchesFilter(Game game, FilterPresetSettings filterSettings) { throw new NotImplementedException(); }
+            public IEnumerable<Game> GetFilteredGames(FilterPresetSettings filterSettings) { throw new NotImplementedException(); }
+            public bool GetGameMatchesFilter(Game game, FilterPresetSettings filterSettings, bool useFuzzyNameMatch) { throw new NotImplementedException(); }
+            public IEnumerable<Game> GetFilteredGames(FilterPresetSettings filterSettings, bool useFuzzyNameMatch) { throw new NotImplementedException(); }
+        }
+
+        // 测试用游戏集合。
+        private class FakeGameCollection : IItemCollection<Game>
+        {
+            private readonly Dictionary<Guid, Game> items;
+            public int UpdateCount { get; private set; }
+
+            public FakeGameCollection(Game game)
+            {
+                items = new Dictionary<Guid, Game> { { game.Id, game } };
+            }
+
+            public Game this[Guid id] { get { return Get(id); } set { items[id] = value; } }
+            public int Count { get { return items.Count; } }
+            public bool IsReadOnly { get { return false; } }
+            public GameDatabaseCollection CollectionType { get { return GameDatabaseCollection.Games; } }
+            public event EventHandler<ItemCollectionChangedEventArgs<Game>> ItemCollectionChanged;
+            public event EventHandler<ItemUpdatedEventArgs<Game>> ItemUpdated;
+
+            public Game Get(Guid id)
+            {
+                Game game;
+                items.TryGetValue(id, out game);
+                return game;
+            }
+
+            public void Update(Game item)
+            {
+                UpdateCount++;
+                items[item.Id] = item;
+            }
+
+            public void Add(Game item) { items[item.Id] = item; }
+            public void Clear() { items.Clear(); }
+            public bool Contains(Game item) { return item != null && items.ContainsKey(item.Id); }
+            public void CopyTo(Game[] array, int arrayIndex) { items.Values.CopyTo(array, arrayIndex); }
+            public bool Remove(Game item) { return item != null && items.Remove(item.Id); }
+            public IEnumerator<Game> GetEnumerator() { return items.Values.GetEnumerator(); }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
+            public void Dispose() { }
+            public bool ContainsItem(Guid id) { return items.ContainsKey(id); }
+            public List<Game> Get(IList<Guid> ids) { throw new NotImplementedException(); }
+            public Game Add(string itemName) { throw new NotImplementedException(); }
+            public Game Add(string itemName, Func<Game, string, bool> existingComparer) { throw new NotImplementedException(); }
+            public IEnumerable<Game> Add(List<string> items) { throw new NotImplementedException(); }
+            public Game Add(MetadataProperty property) { throw new NotImplementedException(); }
+            public IEnumerable<Game> Add(IEnumerable<MetadataProperty> properties) { throw new NotImplementedException(); }
+            public IEnumerable<Game> Add(List<string> items, Func<Game, string, bool> existingComparer) { throw new NotImplementedException(); }
+            public void Add(IEnumerable<Game> items) { throw new NotImplementedException(); }
+            public bool Remove(Guid id) { throw new NotImplementedException(); }
+            public bool Remove(IEnumerable<Game> items) { throw new NotImplementedException(); }
+            public void Update(IEnumerable<Game> items) { throw new NotImplementedException(); }
+            public IDisposable BufferedUpdate() { throw new NotImplementedException(); }
+            public void BeginBufferUpdate() { throw new NotImplementedException(); }
+            public void EndBufferUpdate() { throw new NotImplementedException(); }
+            public IEnumerable<Game> GetClone() { throw new NotImplementedException(); }
         }
 
         // 测试用通知 API。

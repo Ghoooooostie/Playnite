@@ -18,7 +18,12 @@
 2026-06-20：记录 GameActivityReview release 版只需同步插件 DLL 和全屏主题 Main.xaml。
 2026-06-20：GameScreenshots 1.6 将截图画廊改为按游戏分组展示。
 2026-06-20：GameScreenshots 1.7 新增截图管理模式，支持多选并删除截图文件。
+2026-06-20：GameScreenshots 新增设为背景按钮，可把单张选中截图写入对应游戏背景图。
+2026-06-20：GameScreenshots 升级到 1.9 并生成新的 pext 发布包。
 2026-06-20：GameActivityReview 1.8 恢复桌面主菜单入口，全屏仍使用顶部 Play Time 入口，并生成 1.8 release 包。
 2026-06-20：LunaTranslator 脚本改为仅 Switch 平台生效，并新增启动后自动绑定模拟器窗口。
 2026-06-20：GameActivityReview 1.9 修复桌面版插件加载失败并把桌面入口改为时长，GameScreenshots 1.8 将截图画廊显示名改为画廊。
 2026-06-20：统一 5 个插件最新发布包命名，补齐标准格式的 pext 产物记录。
+2026-06-20：新增 SwitchSmartImport 插件，提供 Switch 智能导入、可配置多目录扫描、待确认列表和 Switch Local Metadata 全量刷新。
+2026-06-20：SwitchSmartImport 升级到 1.1，补上默认平台/模拟器/配置设置，并修复待确认导入缺配置时崩溃。
+2026-06-20：SwitchLocalMetadata 1.4 增加自动背景搜索链，本地横图缺失时尝试官网 og:image 和 SteamGridDB 页面图，并生成新 pext 包。

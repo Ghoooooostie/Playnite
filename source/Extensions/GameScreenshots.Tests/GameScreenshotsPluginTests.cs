@@ -63,6 +63,21 @@ namespace GameScreenshots.Tests
         }
 
         [Test]
+        public void Plugin_game_menu_can_set_background_from_screenshot_view()
+        {
+            var background = new FakeGameBackgroundService();
+            var windows = new FakeScreenshotWindowService();
+            var plugin = CreatePlugin(windows: windows, background: background);
+            var game = new Game("双人成行") { Id = Guid.Parse("66666666-6666-6666-6666-666666666666") };
+
+            var items = plugin.GetGameMenuItems(new GetGameMenuItemsArgs { Games = new List<Game> { game } }).ToList();
+            items[1].Action(null);
+
+            Assert.AreEqual(1, windows.OpenCount);
+            Assert.AreSame(background, windows.BackgroundService);
+        }
+
+        [Test]
         public void Plugin_adds_sidebar_gallery_entry()
         {
             var api = new FakePlayniteApi(Path.Combine(Path.GetTempPath(), "GameScreenshotsPluginTests", Guid.NewGuid().ToString()));
@@ -152,7 +167,9 @@ namespace GameScreenshots.Tests
             IGameScreenshotService capture = null,
             IScreenshotHotkeyService hotkey = null,
             IGameSelectionProvider selection = null,
-            IScreenshotMessageService messages = null)
+            IScreenshotMessageService messages = null,
+            IScreenshotWindowService windows = null,
+            IGameBackgroundService background = null)
         {
             return new GameScreenshotsPlugin(
                 null,
@@ -161,7 +178,8 @@ namespace GameScreenshots.Tests
                 hotkey ?? new FakeScreenshotHotkeyService(),
                 selection ?? new FakeGameSelectionProvider(null),
                 messages ?? new FakeScreenshotMessageService(),
-                new FakeScreenshotWindowService());
+                windows ?? new FakeScreenshotWindowService(),
+                background ?? new FakeGameBackgroundService());
         }
 
         // 测试用 Playnite API，只记录自定义元素注册信息。
@@ -315,10 +333,19 @@ namespace GameScreenshots.Tests
         private class FakeScreenshotWindowService : IScreenshotWindowService
         {
             public int OpenCount { get; private set; }
+            public IGameBackgroundService BackgroundService { get; set; }
 
             public void OpenGameScreenshots(Game game)
             {
                 OpenCount++;
+            }
+        }
+
+        // 测试用背景设置服务。
+        private class FakeGameBackgroundService : IGameBackgroundService
+        {
+            public void SetBackground(Game game, string imagePath)
+            {
             }
         }
     }

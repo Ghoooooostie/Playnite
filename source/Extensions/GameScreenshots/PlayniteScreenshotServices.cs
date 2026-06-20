@@ -4,6 +4,7 @@ using Playnite.SDK.Models;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.IO;
 using System.Windows;
 
 namespace GameScreenshots
@@ -72,17 +73,20 @@ namespace GameScreenshots
         private readonly IScreenshotStore store;
         private readonly IGameScreenshotService screenshotService;
         private readonly IScreenshotMessageService messages;
+        private readonly IGameBackgroundService backgrounds;
 
         public PlayniteScreenshotWindowService(
             IPlayniteAPI api,
             IScreenshotStore store,
             IGameScreenshotService screenshotService,
-            IScreenshotMessageService messages)
+            IScreenshotMessageService messages,
+            IGameBackgroundService backgrounds)
         {
             this.api = api;
             this.store = store;
             this.screenshotService = screenshotService;
             this.messages = messages;
+            this.backgrounds = backgrounds;
         }
 
         public void OpenGameScreenshots(Game game)
@@ -92,7 +96,7 @@ namespace GameScreenshots
                 return;
             }
 
-            var viewModel = new GameScreenshotsViewModel(store, screenshotService, messages, game);
+            var viewModel = new GameScreenshotsViewModel(store, screenshotService, messages, backgrounds, game);
             var window = api.Dialogs.CreateWindow(new WindowCreationOptions());
             window.Title = "截图 - " + game.Name;
             window.Content = new GameScreenshotsGameView(viewModel);
@@ -102,6 +106,44 @@ namespace GameScreenshots
             window.Height = 640;
             window.Closed += delegate { viewModel.Dispose(); };
             window.ShowDialog();
+        }
+    }
+
+    // 将本地截图写入 Playnite 数据库并更新为背景图。
+    public class PlayniteGameBackgroundService : IGameBackgroundService
+    {
+        private readonly IPlayniteAPI api;
+
+        public PlayniteGameBackgroundService(IPlayniteAPI api)
+        {
+            this.api = api;
+        }
+
+        public void SetBackground(Game game, string imagePath)
+        {
+            if (api == null || api.Database == null)
+            {
+                throw new InvalidOperationException("Playnite 数据库不可用。");
+            }
+
+            if (game == null)
+            {
+                throw new ArgumentNullException("game");
+            }
+
+            if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
+            {
+                throw new FileNotFoundException("背景图片不存在。", imagePath);
+            }
+
+            var dbGame = api.Database.Games.Get(game.Id);
+            if (dbGame == null)
+            {
+                throw new InvalidOperationException("找不到要设置背景的游戏。");
+            }
+
+            dbGame.BackgroundImage = api.Database.AddFile(imagePath, dbGame.Id);
+            api.Database.Games.Update(dbGame);
         }
     }
 
