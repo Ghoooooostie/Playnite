@@ -11,7 +11,7 @@ namespace SwitchLocalMetadata
     // 从 Playnite 游戏对象中找出本地 ROM 路径。
     public static class SwitchGamePathResolver
     {
-        private static readonly string[] SupportedExtensions = { ".xci", ".nsp" };
+        private static readonly string[] SupportedExtensions = { ".xci", ".nsp", ".xcz", ".nsz" };
 
         public static IEnumerable<string> Resolve(Game game)
         {

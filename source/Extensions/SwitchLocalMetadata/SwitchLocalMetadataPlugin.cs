@@ -26,6 +26,7 @@ namespace SwitchLocalMetadata
             MetadataField.Links,
             MetadataField.Icon,
             MetadataField.CoverImage,
+            MetadataField.BackgroundImage,
             MetadataField.InstallSize
         };
 
@@ -58,11 +59,16 @@ namespace SwitchLocalMetadata
     public class SwitchLocalMetadataProvider : OnDemandMetadataProvider
     {
         private readonly SwitchLocalRomInfo romInfo;
+        private readonly SwitchBackgroundSearchService backgroundSearch;
 
         public override List<MetadataField> AvailableFields { get; }
 
         public SwitchLocalMetadataProvider(Game game, SwitchLocalMetadataSettings settings)
         {
+            backgroundSearch = new SwitchBackgroundSearchService(
+                settings,
+                new SwitchBackgroundSearchCache(new SwitchLocalMetadataPluginPaths(game).PluginUserDataPath),
+                new WebClientDownloader());
             romInfo = SwitchGamePathResolver.Resolve(game)
                 .Select(path => SwitchLocalRomReader.TryRead(path, settings))
                 .FirstOrDefault(info => info != null);
@@ -78,6 +84,7 @@ namespace SwitchLocalMetadata
                     MetadataField.Links,
                     MetadataField.Icon,
                     MetadataField.CoverImage,
+                    MetadataField.BackgroundImage,
                     MetadataField.InstallSize
                 };
         }
@@ -136,10 +143,48 @@ namespace SwitchLocalMetadata
             return romInfo?.ToMetadataFile();
         }
 
+        // 优先使用联网命中的背景，没有则用本地横图，最后退回 control 图。
+        public override MetadataFile GetBackgroundImage(GetMetadataFieldArgs args)
+        {
+            if (romInfo == null)
+            {
+                return null;
+            }
+
+            var remote = backgroundSearch.TryGetBackgroundImage(romInfo);
+            if (remote != null)
+            {
+                return remote;
+            }
+
+            var local = romInfo.ToBackgroundMetadataFile();
+            if (local != null)
+            {
+                return local;
+            }
+
+            return romInfo.ToMetadataFile();
+        }
+
         // 安装大小用 ROM 文件大小表达。
         public override ulong? GetInstallSize(GetMetadataFieldArgs args)
         {
             return romInfo == null ? null : (ulong?)romInfo.FileSize;
+        }
+    }
+
+    // 统一拼插件用户目录。
+    internal sealed class SwitchLocalMetadataPluginPaths
+    {
+        public string PluginUserDataPath { get; }
+
+        public SwitchLocalMetadataPluginPaths(Game game)
+        {
+            PluginUserDataPath = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Playnite",
+                "ExtensionData",
+                "B49F4F91-73E2-46E8-B66E-3D09BD6BE2FA");
         }
     }
 }

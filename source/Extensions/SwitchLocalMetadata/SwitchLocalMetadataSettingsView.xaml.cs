@@ -13,6 +13,7 @@ namespace SwitchLocalMetadata
             AddPathInput(panel, "hactoolnet.exe", "Settings.HactoolnetPath");
             AddPathInput(panel, "prod.keys", "Settings.ProdKeysPath");
             AddPathInput(panel, "title.keys", "Settings.TitleKeysPath");
+            AddCheckBox(panel, "联网搜索背景图", "Settings.EnableOnlineBackgroundSearch");
             Content = panel;
         }
 
@@ -22,6 +23,14 @@ namespace SwitchLocalMetadata
             panel.Children.Add(new TextBlock { Text = label });
             var box = new TextBox { Margin = new Thickness(0, 4, 0, 10) };
             box.SetBinding(TextBox.TextProperty, new Binding(bindingPath) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+            panel.Children.Add(box);
+        }
+
+        // 添加一个开关项。
+        private static void AddCheckBox(Panel panel, string label, string bindingPath)
+        {
+            var box = new CheckBox { Content = label, Margin = new Thickness(0, 4, 0, 10) };
+            box.SetBinding(CheckBox.IsCheckedProperty, new Binding(bindingPath) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             panel.Children.Add(box);
         }
     }

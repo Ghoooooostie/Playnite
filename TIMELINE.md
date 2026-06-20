@@ -26,4 +26,9 @@
 2026-06-20：统一 5 个插件最新发布包命名，补齐标准格式的 pext 产物记录。
 2026-06-20：新增 SwitchSmartImport 插件，提供 Switch 智能导入、可配置多目录扫描、待确认列表和 Switch Local Metadata 全量刷新。
 2026-06-20：SwitchSmartImport 升级到 1.1，补上默认平台/模拟器/配置设置，并修复待确认导入缺配置时崩溃。
+2026-06-20：SwitchSmartImport 升级到 1.2，确认导入改为后台执行并使用通知提示开始、完成和失败。
+2026-06-20：SwitchSmartImport 升级到 1.3，修复扫描目录编号递增异常，并减少重复本体与补丁误入候选。
+2026-06-20：SwitchSmartImport 升级到 1.4，导入时如果库里已存在同路径或同目录同名游戏则改为更新，不再重复新建。
+2026-06-20：SwitchSmartImport 升级到 1.5，补上跨目录本体别名判重，减少 Switch Local Metadata 刷新后暴露出的重复游戏。
 2026-06-20：SwitchLocalMetadata 1.4 增加自动背景搜索链，本地横图缺失时尝试官网 og:image 和 SteamGridDB 页面图，并生成新 pext 包。
+2026-06-20：SwitchLocalMetadata 升级到 1.5，补齐 `nsz/xcz` 读取支持，修复部分 Switch 游戏图标和封面丢失问题。

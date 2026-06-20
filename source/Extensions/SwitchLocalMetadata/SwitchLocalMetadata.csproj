@@ -38,6 +38,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SwitchBackgroundSearchCache.cs" />
+    <Compile Include="SwitchBackgroundSearchService.cs" />
     <Compile Include="HactoolnetSwitchMetadataExtractor.cs" />
     <Compile Include="NacpReader.cs" />
     <Compile Include="SwitchGamePathResolver.cs" />
@@ -46,6 +48,7 @@
     <Compile Include="SwitchLocalMetadataSettingsView.xaml.cs" />
     <Compile Include="SwitchLocalRomInfo.cs" />
     <Compile Include="SwitchLocalRomReader.cs" />
+    <Compile Include="SwitchTitleSearchNormalizer.cs" />
     <Compile Include="SwitchToolPathResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

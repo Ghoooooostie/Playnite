@@ -57,12 +57,14 @@ namespace SwitchLocalMetadata
         private string ExtractSmallNcas(string path, string workDir)
         {
             var extension = Path.GetExtension(path);
-            if (extension.Equals(".xci", StringComparison.OrdinalIgnoreCase))
+            if (extension.Equals(".xci", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".xcz", StringComparison.OrdinalIgnoreCase))
             {
                 return ExtractSmallXciNcas(path, workDir);
             }
 
-            if (extension.Equals(".nsp", StringComparison.OrdinalIgnoreCase))
+            if (extension.Equals(".nsp", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".nsz", StringComparison.OrdinalIgnoreCase))
             {
                 return ExtractSmallNspNcas(path, workDir);
             }
@@ -108,7 +110,10 @@ namespace SwitchLocalMetadata
             }
 
             var ext = Path.GetExtension(path);
-            return ext.Equals(".xci", StringComparison.OrdinalIgnoreCase) || ext.Equals(".nsp", StringComparison.OrdinalIgnoreCase);
+            return ext.Equals(".xci", StringComparison.OrdinalIgnoreCase)
+                || ext.Equals(".nsp", StringComparison.OrdinalIgnoreCase)
+                || ext.Equals(".xcz", StringComparison.OrdinalIgnoreCase)
+                || ext.Equals(".nsz", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool IsValidSettings()
@@ -153,6 +158,7 @@ namespace SwitchLocalMetadata
                 nacp.Publisher,
                 Path.GetFileNameWithoutExtension(iconPath) + ".jpg",
                 File.ReadAllBytes(iconPath),
+                SwitchLocalRomReader.ResolveBackgroundImagePath(sourcePath),
                 fileSize);
         }
 

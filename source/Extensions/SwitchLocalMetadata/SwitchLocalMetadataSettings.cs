@@ -11,10 +11,12 @@ namespace SwitchLocalMetadata
         private string hactoolnetPath = string.Empty;
         private string prodKeysPath = string.Empty;
         private string titleKeysPath = string.Empty;
+        private bool enableOnlineBackgroundSearch = true;
 
         public string HactoolnetPath { get => hactoolnetPath; set => SetValue(ref hactoolnetPath, value); }
         public string ProdKeysPath { get => prodKeysPath; set => SetValue(ref prodKeysPath, value); }
         public string TitleKeysPath { get => titleKeysPath; set => SetValue(ref titleKeysPath, value); }
+        public bool EnableOnlineBackgroundSearch { get => enableOnlineBackgroundSearch; set => SetValue(ref enableOnlineBackgroundSearch, value); }
     }
 
     // Playnite 设置页模型，负责读写插件配置。

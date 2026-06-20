@@ -10,7 +10,18 @@ namespace SwitchLocalMetadata
     public static class SwitchLocalRomReader
     {
         private static readonly Regex TitleIdRegex = new Regex(@"(?<![A-Fa-f0-9])01[A-Fa-f0-9]{14}(?![A-Fa-f0-9])", RegexOptions.Compiled);
-        private static readonly string[] SupportedExtensions = { ".xci", ".nsp" };
+        private static readonly string[] SupportedExtensions = { ".xci", ".nsp", ".xcz", ".nsz" };
+        private static readonly string[] BackgroundImageNames =
+        {
+            "background.jpg",
+            "background.png",
+            "bg.jpg",
+            "bg.png",
+            "fanart.jpg",
+            "fanart.png",
+            "banner.jpg",
+            "banner.png"
+        };
 
         public static SwitchLocalRomInfo TryRead(string path, SwitchLocalMetadataSettings settings)
         {
@@ -41,6 +52,32 @@ namespace SwitchLocalMetadata
             }
 
             return Regex.Replace(name, @"\s+", " ").Trim(' ', '-', '_');
+        }
+
+        // 从 ROM 同目录查找常见横版背景图文件。
+        public static string ResolveBackgroundImagePath(string romPath)
+        {
+            if (string.IsNullOrWhiteSpace(romPath))
+            {
+                return null;
+            }
+
+            var romDirectory = Path.GetDirectoryName(romPath);
+            if (string.IsNullOrWhiteSpace(romDirectory) || !Directory.Exists(romDirectory))
+            {
+                return null;
+            }
+
+            foreach (var fileName in BackgroundImageNames)
+            {
+                var candidate = Path.Combine(romDirectory, fileName);
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         public static bool IsSupportedFile(string path)

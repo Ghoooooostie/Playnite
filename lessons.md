@@ -28,3 +28,4 @@
 - 2026-06-20：GameScreenshots 如果桌面/侧边栏入口正常、只有 Fullscreen 首页不显示，先检查当前正在使用的 Fullscreen 主题自己的 `Views/Main.xaml` 是否包含 `GameScreenshots_FullscreenHomeScreenshots` 槽位；不要先误判成插件没装好，也不要默认用户用的是 `Default` 主题。
 - 2026-06-20：只要改了 Playnite 插件并交付发布结果，每次都要同时生成对应的 `.pext`，不能只给 DLL 或只做 Release 构建。
 - 2026-06-20：生成 Playnite 插件 `.pext`` 时必须同步更新 `extension.yaml` 里的版本号，并按新版本号产出包名，不能沿用旧版本直接重打包。
+- 2026-06-20：SwitchSmartImport 支持导入 `nsz/xcz` 时，SwitchLocalMetadata 也必须同步支持读取这两种压缩包，否则游戏会丢图标和封面。
