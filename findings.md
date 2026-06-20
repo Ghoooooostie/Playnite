@@ -15,3 +15,7 @@
 - Playnite 默认桌面主题的 ListViewItem 使用 GridViewRowPresenter，截图插件用 ListView 承载卡片会只显示行背景，改用 ItemsControl 可避免主题吞掉缩略图内容。
 - 截图画廊平铺所有截图会混杂多个游戏；ViewModel 应提供按 GameId 聚合的 ScreenshotGroups，画廊只绑定分组数据。
 - 截图删除必须由 ScreenshotStore 校验路径，只允许删除截图根目录内的 PNG，避免 UI 传入任意路径导致误删。
+- `H:\乙女` 中 Switch 包既有分目录存放，也有同目录混放 `[Base]` / `[Update]` 的情况。
+- 同一游戏可能同时存在本体、副本、整合包、补丁和 DLC，去重不能只按文件路径。
+- `Switch Local Metadata` 目前可直接按游戏路径返回本地元数据，适合作为导入后可选的全量刷新来源。
+- SwitchSmartImport 设置页不能只给占位文本，至少要能直接维护扫描目录、扫描间隔和资料来源，否则规则虽已实现但用户无法落地配置。

@@ -32,5 +32,6 @@
 2026-06-20：SwitchSmartImport 升级到 1.5，补上跨目录本体别名判重，减少 Switch Local Metadata 刷新后暴露出的重复游戏。
 2026-06-20：SwitchSmartImport 1.5 修复导入后元数据刷新未显式写回数据库的问题，并补上背景图写回。
 2026-06-20：SwitchSmartImport 1.5 修复单条元数据失败中断整批刷新，并改正图片优先取内存内容的落库顺序。
+2026-06-20：SwitchSmartImport 升级到 1.6，修复定时扫描不通知、不自动导入、扫描间隔不即时生效的问题，并补齐 1.6 安装包。
 2026-06-20：SwitchLocalMetadata 1.4 增加自动背景搜索链，本地横图缺失时尝试官网 og:image 和 SteamGridDB 页面图，并生成新 pext 包。
 2026-06-20：SwitchLocalMetadata 升级到 1.5，补齐 `nsz/xcz` 读取支持，修复部分 Switch 游戏图标和封面丢失问题。
